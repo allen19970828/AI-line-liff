@@ -109,7 +109,7 @@ class SchoolsTable
             ])
 
             // [第三卷：操作手段]
-            // 宗師修正：Table 的 Action 必須引用 Filament\Tables\Actions 下的類別
+            // 宗師修正：Table 的 Action 在 Filament v4 統一引用 Filament\Actions 下的類別
             ->actions([
                 EditAction::make()
                     ->iconButton(), // 用小按鈕，省空間
@@ -125,6 +125,33 @@ class SchoolsTable
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
+
+                    // 宗師加持：批次更新營運狀態
+                    \Filament\Actions\BulkAction::make('updateStatus')
+                        ->label('更新營運狀態')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->form([
+                            \Filament\Forms\Components\Select::make('is_active')
+                                ->label('設定狀態')
+                                ->options([
+                                    true => '營運中',
+                                    false => '停止營運',
+                                ])
+                                ->required(),
+                        ])
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data): void {
+                            // 宗師心法：使用 each 逐一更新，觸發 model event (若有)
+                            $records->each(fn ($record) => $record->update(['is_active' => $data['is_active']]));
+
+                            // 通知
+                            \Filament\Notifications\Notification::make()
+                                ->title('更新完成')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                 ]),
             ])
 
