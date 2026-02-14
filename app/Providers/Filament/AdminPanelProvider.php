@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -18,6 +19,12 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Support\Facades\Blade;
+use Jeffgreco13\FilamentBreezy\BreezyCore;
+use Niladam\FilamentAutoLogout\AutoLogoutPlugin;
+use Tapp\FilamentAuthenticationLog\FilamentAuthenticationLogPlugin;
+use Saade\FilamentLaravelLog\FilamentLaravelLogPlugin;
+use Filament\View\PanelsRenderHook;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -27,10 +34,25 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
+            ->passwordReset()
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn(): string => Blade::render('<style>
+                    /* 宗師修正：徹底隱藏 2FA 巨大的 SVG 圖示 (使用更廣泛的選取器) */
+                    .fi-section svg.w-6,
+                    .fi-section svg.w-5,
+                    .fi-section svg.h-6,
+                    .fi-section svg.h-5,
+                    h3 svg {
+                        display: none !important;
+                    }
+                </style>')
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -51,6 +73,24 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->plugins([
+                FilamentShieldPlugin::make(),
+                BreezyCore::make()
+                    ->myProfile(
+                        shouldRegisterUserMenu: true,
+                        shouldRegisterNavigation: false,
+                        hasAvatars: true,
+                        slug: 'my-profile'
+                    )
+                    ->enableTwoFactorAuthentication(),
+                AutoLogoutPlugin::make(),
+                FilamentAuthenticationLogPlugin::make(),
+                FilamentLaravelLogPlugin::make()
+                    ->navigationGroup('系統管理')
+                    ->navigationLabel('系統日誌')
+                    ->navigationIcon('heroicon-o-document-text')
+                    ->navigationSort(100),
             ])
             ->authMiddleware([
                 Authenticate::class,

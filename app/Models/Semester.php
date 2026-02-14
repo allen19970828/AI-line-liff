@@ -11,11 +11,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Semester extends Model
 {
     use BelongsToSchool;
-    use HasFactory, SoftDeletes; // 引入之前傳授的護法心經，確保不會撈到別校的學期
+    use HasFactory, SoftDeletes, LogsActivity; // 引入之前傳授的護法心經，確保不會撈到別校的學期
 
     /**
      * [第二式：守門員]
@@ -37,6 +39,14 @@ class Semester extends Model
         'fruit_days',     // JSON
         'is_active',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     /**
      * [第三式：易容術 (Casting)]
@@ -125,7 +135,7 @@ class Semester extends Model
      */
     public function containsDate($date): bool
     {
-        if (! $date instanceof Carbon) {
+        if (!$date instanceof Carbon) {
             $date = Carbon::parse($date);
         }
 
@@ -138,7 +148,7 @@ class Semester extends Model
      */
     public function isFruitDay($date): bool
     {
-        if (! $date instanceof Carbon) {
+        if (!$date instanceof Carbon) {
             $date = Carbon::parse($date);
         }
 

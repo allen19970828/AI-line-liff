@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Schools;
 use App\Filament\Resources\Schools\Pages\CreateSchool;
 use App\Filament\Resources\Schools\Pages\EditSchool;
 use App\Filament\Resources\Schools\Pages\ListSchools;
+use App\Filament\Resources\Schools\Pages\ListSchoolActivities;
 use App\Filament\Resources\Schools\Schemas\SchoolForm;
 use App\Filament\Resources\Schools\Tables\SchoolsTable;
 use App\Models\School;
@@ -44,6 +45,7 @@ class SchoolResource extends Resource
         return [
             'index' => ListSchools::route('/'),
             'create' => CreateSchool::route('/create'),
+            'activities' => ListSchoolActivities::route('/{record}/activities'),
             'edit' => EditSchool::route('/{record}/edit'),
         ];
     }

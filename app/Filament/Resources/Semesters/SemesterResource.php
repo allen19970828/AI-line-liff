@@ -46,6 +46,7 @@ class SemesterResource extends Resource
         return [
             'index' => ListSemesters::route('/'),
             'create' => CreateSemester::route('/create'),
+            'activities' => Pages\ListSemesterActivities::route('/{record}/activities'),
             'edit' => EditSemester::route('/{record}/edit'),
         ];
     }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7ba7f64726d7a7e4654ccfbb94cf4036",
+    "content-hash": "cbf47231fb8dc98f90544820b7c6f38d",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -74,28 +74,29 @@
         },
         {
             "name": "bacon/bacon-qr-code",
-            "version": "2.0.8",
+            "version": "v3.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Bacon/BaconQrCode.git",
-                "reference": "8674e51bb65af933a5ffaf1c308a660387c35c22"
+                "reference": "36a1cb2b81493fa5b82e50bf8068bf84d1542563"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Bacon/BaconQrCode/zipball/8674e51bb65af933a5ffaf1c308a660387c35c22",
-                "reference": "8674e51bb65af933a5ffaf1c308a660387c35c22",
+                "url": "https://api.github.com/repos/Bacon/BaconQrCode/zipball/36a1cb2b81493fa5b82e50bf8068bf84d1542563",
+                "reference": "36a1cb2b81493fa5b82e50bf8068bf84d1542563",
                 "shasum": ""
             },
             "require": {
                 "dasprid/enum": "^1.0.3",
                 "ext-iconv": "*",
-                "php": "^7.1 || ^8.0"
+                "php": "^8.1"
             },
             "require-dev": {
-                "phly/keep-a-changelog": "^2.1",
-                "phpunit/phpunit": "^7 | ^8 | ^9",
-                "spatie/phpunit-snapshot-assertions": "^4.2.9",
-                "squizlabs/php_codesniffer": "^3.4"
+                "phly/keep-a-changelog": "^2.12",
+                "phpunit/phpunit": "^10.5.11 || ^11.0.4",
+                "spatie/phpunit-snapshot-assertions": "^5.1.5",
+                "spatie/pixelmatch-php": "^1.2.0",
+                "squizlabs/php_codesniffer": "^3.9"
             },
             "suggest": {
                 "ext-imagick": "to generate QR code images"
@@ -122,9 +123,9 @@
             "homepage": "https://github.com/Bacon/BaconQrCode",
             "support": {
                 "issues": "https://github.com/Bacon/BaconQrCode/issues",
-                "source": "https://github.com/Bacon/BaconQrCode/tree/2.0.8"
+                "source": "https://github.com/Bacon/BaconQrCode/tree/v3.0.3"
             },
-            "time": "2022-12-07T17:46:57+00:00"
+            "time": "2025-11-19T17:15:36+00:00"
         },
         {
             "name": "bezhansalleh/filament-plugin-essentials",
@@ -2656,6 +2657,216 @@
             "time": "2025-08-22T14:27:06+00:00"
         },
         {
+            "name": "jaybizzle/crawler-detect",
+            "version": "v1.3.7",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/JayBizzle/Crawler-Detect.git",
+                "reference": "7f7a45b5d5df9c95ba6b2008544e6cf8e66de6f5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/JayBizzle/Crawler-Detect/zipball/7f7a45b5d5df9c95ba6b2008544e6cf8e66de6f5",
+                "reference": "7f7a45b5d5df9c95ba6b2008544e6cf8e66de6f5",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^4.8|^5.5|^6.5|^7.5|^8.5|^9.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jaybizzle\\CrawlerDetect\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mark Beech",
+                    "email": "m@rkbee.ch",
+                    "role": "Developer"
+                }
+            ],
+            "description": "CrawlerDetect is a PHP class for detecting bots/crawlers/spiders via the user agent",
+            "homepage": "https://github.com/JayBizzle/Crawler-Detect/",
+            "keywords": [
+                "crawler",
+                "crawler detect",
+                "crawler detector",
+                "crawlerdetect",
+                "php crawler detect"
+            ],
+            "support": {
+                "issues": "https://github.com/JayBizzle/Crawler-Detect/issues",
+                "source": "https://github.com/JayBizzle/Crawler-Detect/tree/v1.3.7"
+            },
+            "time": "2026-02-02T19:15:54+00:00"
+        },
+        {
+            "name": "jeffgreco13/filament-breezy",
+            "version": "v3.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Jacobtims/filament-breezy.git",
+                "reference": "b4d3df0f697068ccd8e1267676b784ae4c511dbb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Jacobtims/filament-breezy/zipball/b4d3df0f697068ccd8e1267676b784ae4c511dbb",
+                "reference": "b4d3df0f697068ccd8e1267676b784ae4c511dbb",
+                "shasum": ""
+            },
+            "require": {
+                "bacon/bacon-qr-code": "^3.0",
+                "filament/filament": "^4.0|^5.0",
+                "illuminate/contracts": "^11.0|^12.0",
+                "jenssegers/agent": "^2.6",
+                "php": "^8.2|^8.3|^8.4",
+                "pragmarx/google2fa": "^7.0|^8.0|^9.0",
+                "spatie/laravel-package-tools": "^1.14.0"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.0",
+                "laravel/pint": "^1.0",
+                "laravel/sanctum": "^4.0",
+                "orchestra/testbench": "^9.0|^10.0",
+                "pestphp/pest": "^4.0",
+                "pestphp/pest-plugin-arch": "^v4.0",
+                "pestphp/pest-plugin-laravel": "^4.0",
+                "pestphp/pest-plugin-livewire": "^v4.0",
+                "phpstan/phpstan-deprecation-rules": "^2.0",
+                "phpstan/phpstan-phpunit": "^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "FilamentBreezy": "Jeffgreco13\\FilamentBreezy\\Facades\\FilamentBreezy"
+                    },
+                    "providers": [
+                        "Jeffgreco13\\FilamentBreezy\\FilamentBreezyServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Jeffgreco13\\FilamentBreezy\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jeff Greco",
+                    "email": "jeff@jeffpgreco.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A custom package for Filament with login flow, profile and teams support.",
+            "homepage": "https://github.com/jeffgreco13/filament-breezy",
+            "keywords": [
+                "filament-breezy",
+                "jeffgreco13",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/Jacobtims/filament-breezy/issues",
+                "source": "https://github.com/Jacobtims/filament-breezy/tree/v3.1.1"
+            },
+            "time": "2026-01-27T12:02:56+00:00"
+        },
+        {
+            "name": "jenssegers/agent",
+            "version": "v2.6.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jenssegers/agent.git",
+                "reference": "daa11c43729510b3700bc34d414664966b03bffe"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jenssegers/agent/zipball/daa11c43729510b3700bc34d414664966b03bffe",
+                "reference": "daa11c43729510b3700bc34d414664966b03bffe",
+                "shasum": ""
+            },
+            "require": {
+                "jaybizzle/crawler-detect": "^1.2",
+                "mobiledetect/mobiledetectlib": "^2.7.6",
+                "php": ">=5.6"
+            },
+            "require-dev": {
+                "php-coveralls/php-coveralls": "^2.1",
+                "phpunit/phpunit": "^5.0|^6.0|^7.0"
+            },
+            "suggest": {
+                "illuminate/support": "Required for laravel service providers"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Agent": "Jenssegers\\Agent\\Facades\\Agent"
+                    },
+                    "providers": [
+                        "Jenssegers\\Agent\\AgentServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-master": "3.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Jenssegers\\Agent\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jens Segers",
+                    "homepage": "https://jenssegers.com"
+                }
+            ],
+            "description": "Desktop/mobile user agent parser with support for Laravel, based on Mobiledetect",
+            "homepage": "https://github.com/jenssegers/agent",
+            "keywords": [
+                "Agent",
+                "browser",
+                "desktop",
+                "laravel",
+                "mobile",
+                "platform",
+                "user agent",
+                "useragent"
+            ],
+            "support": {
+                "issues": "https://github.com/jenssegers/agent/issues",
+                "source": "https://github.com/jenssegers/agent/tree/v2.6.4"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/jenssegers",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/jenssegers/agent",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2020-06-13T08:05:20+00:00"
+        },
+        {
             "name": "kirschbaum-development/eloquent-power-joins",
             "version": "4.2.11",
             "source": {
@@ -4564,6 +4775,68 @@
             "time": "2022-12-02T22:17:43+00:00"
         },
         {
+            "name": "mobiledetect/mobiledetectlib",
+            "version": "2.8.45",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/serbanghita/Mobile-Detect.git",
+                "reference": "96aaebcf4f50d3d2692ab81d2c5132e425bca266"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/serbanghita/Mobile-Detect/zipball/96aaebcf4f50d3d2692ab81d2c5132e425bca266",
+                "reference": "96aaebcf4f50d3d2692ab81d2c5132e425bca266",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.0.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.8.36"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Detection": "namespaced/"
+                },
+                "classmap": [
+                    "Mobile_Detect.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Serban Ghita",
+                    "email": "serbanghita@gmail.com",
+                    "homepage": "http://mobiledetect.net",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Mobile_Detect is a lightweight PHP class for detecting mobile devices. It uses the User-Agent string combined with specific HTTP headers to detect the mobile environment.",
+            "homepage": "https://github.com/serbanghita/Mobile-Detect",
+            "keywords": [
+                "detect mobile devices",
+                "mobile",
+                "mobile detect",
+                "mobile detector",
+                "php mobile detect"
+            ],
+            "support": {
+                "issues": "https://github.com/serbanghita/Mobile-Detect/issues",
+                "source": "https://github.com/serbanghita/Mobile-Detect/tree/2.8.45"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/serbanghita",
+                    "type": "github"
+                }
+            ],
+            "time": "2023-11-07T21:57:25+00:00"
+        },
+        {
             "name": "monolog/monolog",
             "version": "3.10.0",
             "source": {
@@ -5056,6 +5329,76 @@
                 "source": "https://github.com/nikic/PHP-Parser/tree/v5.7.0"
             },
             "time": "2025-12-06T11:56:16+00:00"
+        },
+        {
+            "name": "niladam/filament-auto-logout",
+            "version": "2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/niladam/filament-auto-logout.git",
+                "reference": "6fde9f01dbe9de80d638d5d6b2c192f24438c332"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/niladam/filament-auto-logout/zipball/6fde9f01dbe9de80d638d5d6b2c192f24438c332",
+                "reference": "6fde9f01dbe9de80d638d5d6b2c192f24438c332",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^3.0|^4.0",
+                "php": "^8.2",
+                "spatie/laravel-package-tools": "^1.15.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Niladam\\FilamentAutoLogout\\AutoLogoutServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Niladam\\FilamentAutoLogout\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Madalin Tache",
+                    "email": "niladam@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A filament plugin that auto logs out your users if they are idle.",
+            "homepage": "https://github.com/niladam/filament-auto-logout",
+            "keywords": [
+                "afk logout",
+                "autologout",
+                "filament auto logout",
+                "filament-auto-logout",
+                "laravel",
+                "logout if afk",
+                "logout if idle",
+                "logout on idle"
+            ],
+            "support": {
+                "issues": "https://github.com/niladam/filament-auto-logout/issues",
+                "source": "https://github.com/niladam/filament-auto-logout"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/niladam",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-11-11T11:13:21+00:00"
         },
         {
             "name": "nunomaduro/termwind",
@@ -6598,6 +6941,77 @@
             "time": "2025-12-14T04:43:48+00:00"
         },
         {
+            "name": "rappasoft/laravel-authentication-log",
+            "version": "v6.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rappasoft/laravel-authentication-log.git",
+                "reference": "9a810376ea1624aeca3bc983c33be9a82593f991"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rappasoft/laravel-authentication-log/zipball/9a810376ea1624aeca3bc983c33be9a82593f991",
+                "reference": "9a810376ea1624aeca3bc983c33be9a82593f991",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^11.0|^12.0",
+                "php": "^8.1",
+                "spatie/laravel-package-tools": "^1.4.3"
+            },
+            "require-dev": {
+                "nunomaduro/collision": "^8.0",
+                "orchestra/testbench": "^8.0|^9.0|^10.0",
+                "pestphp/pest": "^3.7",
+                "pestphp/pest-plugin-laravel": "^3.1",
+                "spatie/laravel-ray": "^1.29",
+                "vimeo/psalm": "^4.20|^5.0|^6.6"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Rappasoft\\LaravelAuthenticationLog\\LaravelAuthenticationLogServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Rappasoft\\LaravelAuthenticationLog\\": "src",
+                    "Rappasoft\\LaravelAuthenticationLog\\Database\\Factories\\": "database/factories"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Anthony Rappa",
+                    "email": "rappa819@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Log user authentication details and send new device notifications.",
+            "homepage": "https://github.com/rappasoft/laravel-authentication-log",
+            "keywords": [
+                "laravel",
+                "laravel-authentication-log",
+                "rappasoft"
+            ],
+            "support": {
+                "issues": "https://github.com/rappasoft/laravel-authentication-log/issues",
+                "source": "https://github.com/rappasoft/laravel-authentication-log/tree/v6.0.1"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/rappasoft",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-12-08T14:26:03+00:00"
+        },
+        {
             "name": "ryangjchandler/blade-capture-directive",
             "version": "v1.1.0",
             "source": {
@@ -6676,6 +7090,82 @@
             "time": "2025-02-25T09:09:36+00:00"
         },
         {
+            "name": "saade/filament-laravel-log",
+            "version": "v4.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/saade/filament-laravel-log.git",
+                "reference": "e8203e47260de3fce75c5484e1014f4fc57adea5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/saade/filament-laravel-log/zipball/e8203e47260de3fce75c5484e1014f4fc57adea5",
+                "reference": "e8203e47260de3fce75c5484e1014f4fc57adea5",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^4.0",
+                "illuminate/contracts": "^11.0|^12.0",
+                "php": "^8.2",
+                "spatie/laravel-package-tools": "^1.15.0"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.1.0",
+                "laravel/pint": "^1.0",
+                "nunomaduro/collision": "^7.0|^8.0",
+                "orchestra/testbench": "^9.0|^10.0",
+                "pestphp/pest": "^2.0",
+                "pestphp/pest-plugin-arch": "^2.0",
+                "pestphp/pest-plugin-laravel": "^2.0",
+                "phpstan/extension-installer": "^1.1",
+                "phpstan/phpstan-deprecation-rules": "^2.0.1",
+                "phpstan/phpstan-phpunit": "^2.0.4",
+                "spatie/laravel-ray": "^1.26"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Saade\\FilamentLaravelLog\\FilamentLaravelLogServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Saade\\FilamentLaravelLog\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Saade",
+                    "email": "saade@outlook.com.br",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Access laravel.log file through Filament admin panel",
+            "homepage": "https://github.com/saade/filament-laravel-log",
+            "keywords": [
+                "filament-laravel-log",
+                "laravel",
+                "saade"
+            ],
+            "support": {
+                "issues": "https://github.com/saade/filament-laravel-log/issues",
+                "source": "https://github.com/saade/filament-laravel-log"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/saade",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-10-02T22:10:33+00:00"
+        },
+        {
             "name": "scrivo/highlight.php",
             "version": "v9.18.1.10",
             "source": {
@@ -6752,74 +7242,6 @@
                 }
             ],
             "time": "2022-12-17T21:53:22+00:00"
-        },
-        {
-            "name": "simplesoftwareio/simple-qrcode",
-            "version": "4.2.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/SimpleSoftwareIO/simple-qrcode.git",
-                "reference": "916db7948ca6772d54bb617259c768c9cdc8d537"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/SimpleSoftwareIO/simple-qrcode/zipball/916db7948ca6772d54bb617259c768c9cdc8d537",
-                "reference": "916db7948ca6772d54bb617259c768c9cdc8d537",
-                "shasum": ""
-            },
-            "require": {
-                "bacon/bacon-qr-code": "^2.0",
-                "ext-gd": "*",
-                "php": ">=7.2|^8.0"
-            },
-            "require-dev": {
-                "mockery/mockery": "~1",
-                "phpunit/phpunit": "~9"
-            },
-            "suggest": {
-                "ext-imagick": "Allows the generation of PNG QrCodes.",
-                "illuminate/support": "Allows for use within Laravel."
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "aliases": {
-                        "QrCode": "SimpleSoftwareIO\\QrCode\\Facades\\QrCode"
-                    },
-                    "providers": [
-                        "SimpleSoftwareIO\\QrCode\\QrCodeServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "SimpleSoftwareIO\\QrCode\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Simple Software LLC",
-                    "email": "support@simplesoftware.io"
-                }
-            ],
-            "description": "Simple QrCode is a QR code generator made for Laravel.",
-            "homepage": "https://www.simplesoftware.io/#/docs/simple-qrcode",
-            "keywords": [
-                "Simple",
-                "generator",
-                "laravel",
-                "qrcode",
-                "wrapper"
-            ],
-            "support": {
-                "issues": "https://github.com/SimpleSoftwareIO/simple-qrcode/issues",
-                "source": "https://github.com/SimpleSoftwareIO/simple-qrcode/tree/4.2.0"
-            },
-            "time": "2021-02-08T20:43:55+00:00"
         },
         {
             "name": "socialiteproviders/line",
@@ -9858,6 +10280,84 @@
                 }
             ],
             "time": "2026-01-01T22:13:48+00:00"
+        },
+        {
+            "name": "tapp/filament-authentication-log",
+            "version": "v5.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/TappNetwork/filament-authentication-log.git",
+                "reference": "3c1fc82d97dbd9887d4ee4dd9bd954d8f415eb3f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/TappNetwork/filament-authentication-log/zipball/3c1fc82d97dbd9887d4ee4dd9bd954d8f415eb3f",
+                "reference": "3c1fc82d97dbd9887d4ee4dd9bd954d8f415eb3f",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^4.0|^5.0",
+                "php": "^8.2",
+                "rappasoft/laravel-authentication-log": "^6.0|^5.0",
+                "spatie/laravel-package-tools": "^1.9"
+            },
+            "require-dev": {
+                "larastan/larastan": "^2.9||^3.0",
+                "laravel/pint": "^1.14",
+                "nunomaduro/collision": "^8.1.1||^7.10.0",
+                "orchestra/testbench": "^10.0.0||^9.0.0||^8.22.0",
+                "pestphp/pest": "^3.7",
+                "pestphp/pest-plugin-arch": "^3.0||^2.7",
+                "pestphp/pest-plugin-laravel": "^3.0||^2.3",
+                "phpstan/extension-installer": "^1.3||^2.0",
+                "phpstan/phpstan-deprecation-rules": "^1.1||^2.0",
+                "phpstan/phpstan-phpunit": "^1.3||^2.0",
+                "spatie/laravel-ray": "^1.35"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Tapp\\FilamentAuthenticationLog\\FilamentAuthenticationLogServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Tapp\\FilamentAuthenticationLog\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tapp Network",
+                    "email": "steve@tappnetwork.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Tapp Network",
+                    "email": "andreia.bohner@tappnetwork.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Filament authentication log plugin.",
+            "homepage": "https://github.com/TappNetwork/filament-authentication-log",
+            "keywords": [
+                "Authentication",
+                "filament",
+                "log",
+                "relation manager",
+                "resource",
+                "tapp network"
+            ],
+            "support": {
+                "issues": "https://github.com/TappNetwork/filament-authentication-log/issues",
+                "source": "https://github.com/TappNetwork/filament-authentication-log"
+            },
+            "time": "2026-02-02T17:37:29+00:00"
         },
         {
             "name": "tijsverkoyen/css-to-inline-styles",
@@ -13557,16 +14057,16 @@
         },
         {
             "name": "webmozart/assert",
-            "version": "2.1.2",
+            "version": "2.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webmozarts/assert.git",
-                "reference": "ce6a2f100c404b2d32a1dd1270f9b59ad4f57649"
+                "reference": "6976757ba8dd70bf8cbaea0914ad84d8b51a9f46"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webmozarts/assert/zipball/ce6a2f100c404b2d32a1dd1270f9b59ad4f57649",
-                "reference": "ce6a2f100c404b2d32a1dd1270f9b59ad4f57649",
+                "url": "https://api.github.com/repos/webmozarts/assert/zipball/6976757ba8dd70bf8cbaea0914ad84d8b51a9f46",
+                "reference": "6976757ba8dd70bf8cbaea0914ad84d8b51a9f46",
                 "shasum": ""
             },
             "require": {
@@ -13613,9 +14113,9 @@
             ],
             "support": {
                 "issues": "https://github.com/webmozarts/assert/issues",
-                "source": "https://github.com/webmozarts/assert/tree/2.1.2"
+                "source": "https://github.com/webmozarts/assert/tree/2.1.3"
             },
-            "time": "2026-01-13T14:02:24+00:00"
+            "time": "2026-02-13T21:01:40+00:00"
         }
     ],
     "aliases": [],

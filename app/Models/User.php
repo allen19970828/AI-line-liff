@@ -4,13 +4,29 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
+use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
+use Spatie\Permission\Traits\HasRoles;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable, TwoFactorAuthenticatable, AuthenticationLoggable, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()    // 紀錄所有可填寫欄位
+            ->logOnlyDirty()   // 只紀錄有變動的部分
+            ->dontSubmitEmptyLogs(); // 如果沒變動就不紀錄
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -71,8 +87,24 @@ class User extends Authenticatable
     /**
      * 關聯：歸屬學校
      */
-    public function school(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function schools(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(School::class);
+        return $this->belongsTo(School::class, 'school_id');
+    }
+
+    /**
+     * 取得 Filament 大頭照 URL
+     */
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return $this->avatar_url ? Storage::url($this->avatar_url) : null;
+    }
+
+    /**
+     * Determine if the user can access the Filament panel.
+     */
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        return true;
     }
 }

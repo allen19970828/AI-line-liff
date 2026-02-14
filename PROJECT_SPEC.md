@@ -7,11 +7,18 @@
 ## 2. 核心技術棧
 
 - **後端框架**: Laravel 12
-- **後台管理**: Filament v4 (TALL Stack: Tailwind CSS, Alpine.js, Laravel, Livewire)
+- **後台管理**: Filament v4 (TALL Stack)
 - **資料庫**: PostgreSQL (支援 pgvector)
+- **身份與安全**:
+    - **Filament Breezy**: 提供個人資料官理、2FA 二階段驗證、頭像上傳。
+    - **Filament Shield**: 基於 Spatie Permission 的權限管理。
+    - **Auto Logout**: 閒置自動登出機制。
+- **日誌追蹤**:
+    - **Filament Activity Log**: 模型異動紀錄（pxlrbt/filament-activity log）。
+    - **Authentication Log**: 使用者登入/登出紀錄。
+    - **Laravel Log**: 系統日誌查看器（storage/logs）。
 - **AI 整合**: Laravel AI, Prism (Echolabs), MCP (Model Context Protocol)
 - **LINE 整合**: LINE Bot SDK, Socialite (LINE Provider), LIFF
-- **權限管理**: Filament Shield (基於 Spatie Permission)
 - **工具與品質**: Laravel Pail, Laravel Pint, Pest (測試)
 
 ## 3. 核心功能與架構
@@ -21,7 +28,16 @@
 - **學校隔離**: 透過 `BelongsToSchool` Trait 實現 Global Scope 隔離。所有模型（如學期、用戶、學生等）均會自動過濾所屬學校的資料。
 - **權限分級**: 支援超級管理員（可切換學校）與學校管理員（僅限自身學校資料）。
 
-### 3.2 學期與午餐管理
+### 3.2 安全與審計 (Security & Auditing)
+
+- **身份驗證**: 整合 LINE Login，超級管理員具備傳統登入與 **2FA (二階段驗證)** 保護。
+- **閒置保護**: 若使用者長時間未操作，系統將自動導向登出頁面以策安全。
+- **全方位日誌**:
+    - **模型層級**: 紀錄資料的新增、修改、刪除（誰在何時改了什麼）。
+    - **存取層級**: 紀錄所有登入、失敗嘗試以及裝置資訊。
+    - **系統層級**: 可直接在後台查閱 Laravel log 檔案，方便快速除錯。
+
+### 3.3 學期與午餐管理
 
 - **學期設定**: 支援國小、幼兒園、國中等不同學制的學期設定。
 - **餐費規則**: 精細的餐費拆解（食材費、點心費等）與退費機制。

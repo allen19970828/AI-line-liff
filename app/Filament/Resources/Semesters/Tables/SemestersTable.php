@@ -46,7 +46,7 @@ class SemestersTable
                 TextColumn::make('start_date')
                     ->label('起訖日期')
                     ->formatStateUsing(
-                        fn (Semester $record) => "{$record->start_date?->format('Y/m/d')} ~ {$record->end_date?->format('Y/m/d')}"
+                        fn(Semester $record) => "{$record->start_date?->format('Y/m/d')} ~ {$record->end_date?->format('Y/m/d')}"
                     ),
 
                 // 直接在列表開關，霸氣！
@@ -69,6 +69,11 @@ class SemestersTable
                     ->label('啟用狀態'),
             ])
             ->actions([
+                \Filament\Actions\Action::make('activities')
+                    ->label('異動紀錄')
+                    ->icon('heroicon-m-clock')
+                    ->color('info')
+                    ->url(fn($record) => \App\Filament\Resources\Semesters\SemesterResource::getUrl('activities', ['record' => $record])),
                 EditAction::make(),
                 DeleteAction::make(),
                 RestoreAction::make(),

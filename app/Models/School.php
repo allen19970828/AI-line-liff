@@ -4,11 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes; // [關鍵] 引入軟刪除心法
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class School extends Model
 {
-    use HasFactory, SoftDeletes; // [關鍵] 啟用心法
+    use HasFactory, SoftDeletes, LogsActivity; // [關鍵] 啟用心法
 
     /**
      * [第一要素：防護罩]
@@ -29,6 +33,14 @@ class School extends Model
         // 注意：id, created_at, updated_at, deleted_at 不需要寫在這裡，系統會自動處理
     ];
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
     /**
      * [第二要素：易容術]
      * $casts (型別轉換)
@@ -48,5 +60,30 @@ class School extends Model
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+
+    /**
+     * [父子連心] 學校 -> 學期
+     */
+    public function semesters(): HasMany
+    {
+        return $this->hasMany(Semester::class);
+    }
+
+    /**
+     * [隔代傳功] 學校 -> (透過學期) -> 行事曆例外
+     * * 用法：$school->calendarExceptions()->get();
+     * 效果：自動幫你撈出該校所有學期底下的所有例外日子
+     */
+    public function calendarExceptions(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            SemesterException::class, // 目標 (孫子)
+            Semester::class,          // 中介 (爸爸)
+            'school_id',              // 爸爸身上的外鍵 (指向爺爺)
+            'semester_id',            // 孫子身上的外鍵 (指向爸爸)
+            'id',                     // 爺爺的主鍵
+            'id'                      // 爸爸的主鍵
+        );
     }
 }

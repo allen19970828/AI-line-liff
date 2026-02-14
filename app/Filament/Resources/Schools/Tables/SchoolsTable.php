@@ -40,7 +40,7 @@ class SchoolsTable
                 TextColumn::make('name')
                     ->label('學校名稱')
                     ->description(
-                        fn (Model $record): string => $record->tax_id ? "統編: {$record->tax_id}" : ''
+                        fn(Model $record): string => $record->tax_id ? "統編: {$record->tax_id}" : ''
                     )
                     ->searchable(['name', 'tax_id']) // 讓這裡也能搜到統編
                     ->wrap(), // 允許換行，避免長名稱撐爆表格
@@ -49,7 +49,7 @@ class SchoolsTable
                 // 宗師指點：縣市與行政區分開佔兩欄太浪費，合體為一欄。
                 TextColumn::make('city')
                     ->label('地區')
-                    ->formatStateUsing(fn (Model $record) => "{$record->city} {$record->district}")
+                    ->formatStateUsing(fn(Model $record) => "{$record->city} {$record->district}")
                     ->badge() // 用徽章樣式，視覺上更整齊
                     ->color('gray')
                     ->sortable(),
@@ -65,8 +65,8 @@ class SchoolsTable
                 TextColumn::make('website')
                     ->label('官網')
                     ->icon('heroicon-m-globe-alt')
-                    ->url(fn ($state) => $state, shouldOpenInNewTab: true) // 點擊直接開新視窗
-                    ->formatStateUsing(fn () => '前往網站') // 不顯示冗長的 URL，只顯示文字
+                    ->url(fn($state) => $state, shouldOpenInNewTab: true) // 點擊直接開新視窗
+                    ->formatStateUsing(fn() => '前往網站') // 不顯示冗長的 URL，只顯示文字
                     ->color('info')
                     ->toggleable(isToggledHiddenByDefault: true), // 預設隱藏，保持介面清爽
 
@@ -104,13 +104,18 @@ class SchoolsTable
                 // 地區過濾器 (進階)
                 SelectFilter::make('city')
                     ->label('縣市')
-                    ->options(fn () => \App\Models\School::distinct()->pluck('city', 'city')->filter()->toArray())
+                    ->options(fn() => \App\Models\School::distinct()->pluck('city', 'city')->filter()->toArray())
                     ->searchable(),
             ])
 
             // [第三卷：操作手段]
             // 宗師修正：Table 的 Action 在 Filament v4 統一引用 Filament\Actions 下的類別
             ->actions([
+                \Filament\Actions\Action::make('activities')
+                    ->label('異動紀錄')
+                    ->icon('heroicon-m-clock')
+                    ->color('info')
+                    ->url(fn($record) => \App\Filament\Resources\Schools\SchoolResource::getUrl('activities', ['record' => $record])),
                 EditAction::make()
                     ->iconButton(), // 用小按鈕，省空間
                 DeleteAction::make()
@@ -143,7 +148,7 @@ class SchoolsTable
                         ])
                         ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data): void {
                             // 宗師心法：使用 each 逐一更新，觸發 model event (若有)
-                            $records->each(fn ($record) => $record->update(['is_active' => $data['is_active']]));
+                            $records->each(fn($record) => $record->update(['is_active' => $data['is_active']]));
 
                             // 通知
                             \Filament\Notifications\Notification::make()
