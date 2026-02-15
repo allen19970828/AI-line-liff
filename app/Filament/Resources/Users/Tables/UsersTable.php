@@ -45,7 +45,7 @@ class UsersTable
                     ->separator(','),
 
                 // 4. 學校顯示 (多租戶核心)
-                TextColumn::make('schools.name')
+                TextColumn::make('school.name')
                     ->label('所屬學校')
                     ->searchable(),
 
