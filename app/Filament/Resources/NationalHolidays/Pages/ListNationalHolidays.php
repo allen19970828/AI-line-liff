@@ -16,4 +16,11 @@ class ListNationalHolidays extends ListRecords
             CreateAction::make(),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\NationalHolidays\Widgets\SyncNationalHolidaysWidget::class,
+        ];
+    }
 }

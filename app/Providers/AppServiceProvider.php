@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\Gate::policy(
+            \Rappasoft\LaravelAuthenticationLog\Models\AuthenticationLog::class,
+            \App\Policies\AuthenticationLogPolicy::class
+        );
+
+        // 宗師指點：確保 Excel 匯入時中文標題不會被轉成 slug
+        \Maatwebsite\Excel\Imports\HeadingRowFormatter::default('none');
     }
 }

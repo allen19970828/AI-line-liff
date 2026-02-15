@@ -11,6 +11,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -18,13 +19,12 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Niladam\FilamentAutoLogout\AutoLogoutPlugin;
-use Tapp\FilamentAuthenticationLog\FilamentAuthenticationLogPlugin;
 use Saade\FilamentLaravelLog\FilamentLaravelLogPlugin;
-use Filament\View\PanelsRenderHook;
+use Tapp\FilamentAuthenticationLog\FilamentAuthenticationLogPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -42,7 +42,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn(): string => Blade::render('<style>
+                fn (): string => Blade::render('<style>
                     /* 宗師修正：徹底隱藏 2FA 巨大的 SVG 圖示 (使用更廣泛的選取器) */
                     .fi-section svg.w-6,
                     .fi-section svg.w-5,
@@ -87,6 +87,7 @@ class AdminPanelProvider extends PanelProvider
                 AutoLogoutPlugin::make(),
                 FilamentAuthenticationLogPlugin::make(),
                 FilamentLaravelLogPlugin::make()
+                    ->authorize(fn () => auth()->user()?->hasRole('super_admin'))
                     ->navigationGroup('系統管理')
                     ->navigationLabel('系統日誌')
                     ->navigationIcon('heroicon-o-document-text')

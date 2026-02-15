@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\SemesterStage;
 use App\Enums\StaffMealMode;
+use App\Models\Pivots\CatererSemester;
 use App\Models\Traits\BelongsToSchool;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,7 +18,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Semester extends Model
 {
     use BelongsToSchool;
-    use HasFactory, SoftDeletes, LogsActivity; // 引入之前傳授的護法心經，確保不會撈到別校的學期
+    use HasFactory, LogsActivity, SoftDeletes; // 引入之前傳授的護法心經，確保不會撈到別校的學期
 
     /**
      * [第二式：守門員]
@@ -76,13 +77,14 @@ class Semester extends Model
     }
 
     /**
-     * 關聯：合作廠商合約
-     * 透過這張表，知道這學期有哪些廠商，負責什麼餐
+     * 關聯：合作廠商 (本學期簽約的廠商)
      */
-    public function catererContracts(): HasMany
+    public function caterers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        // 假設你的合約表 Model 叫做 CatererSemester 或 SemesterCaterer
-        return $this->hasMany(SemesterCaterer::class);
+        return $this->belongsToMany(Caterer::class)
+            ->using(CatererSemester::class)
+            ->withPivot('service_meals')
+            ->withTimestamps();
     }
 
     // =========================================================================
@@ -135,7 +137,7 @@ class Semester extends Model
      */
     public function containsDate($date): bool
     {
-        if (!$date instanceof Carbon) {
+        if (! $date instanceof Carbon) {
             $date = Carbon::parse($date);
         }
 
@@ -148,7 +150,7 @@ class Semester extends Model
      */
     public function isFruitDay($date): bool
     {
-        if (!$date instanceof Carbon) {
+        if (! $date instanceof Carbon) {
             $date = Carbon::parse($date);
         }
 

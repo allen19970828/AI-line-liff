@@ -36,9 +36,9 @@ class UserForm
                             ->label('密碼')
                             ->password()
                             ->revealable()
-                            ->dehydrateStateUsing(fn($state) => Hash::make($state))
-                            ->dehydrated(fn($state) => filled($state))
-                            ->required(fn(string $context): bool => $context === 'create')
+                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                            ->dehydrated(fn ($state) => filled($state))
+                            ->required(fn (string $context): bool => $context === 'create')
                             ->helperText('建立時必填；編輯時若不修改請留空。'),
                     ])->columns(2),
 
@@ -58,7 +58,7 @@ class UserForm
                         // 2. 學校歸屬 (多租戶關鍵)
                         Select::make('school_id')
                             ->label('所屬學校')
-                            ->relationship('schools', 'name') // 使用 plural 'schools'
+                            ->relationship('school', 'name') // 使用 singular 'school'
                             ->required()
                             ->preload()
                             ->searchable()
