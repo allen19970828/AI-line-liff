@@ -4,8 +4,8 @@ namespace App\Filament\Resources\Schools;
 
 use App\Filament\Resources\Schools\Pages\CreateSchool;
 use App\Filament\Resources\Schools\Pages\EditSchool;
-use App\Filament\Resources\Schools\Pages\ListSchools;
 use App\Filament\Resources\Schools\Pages\ListSchoolActivities;
+use App\Filament\Resources\Schools\Pages\ListSchools;
 use App\Filament\Resources\Schools\Schemas\SchoolForm;
 use App\Filament\Resources\Schools\Tables\SchoolsTable;
 use App\Models\School;
@@ -22,6 +22,12 @@ class SchoolResource extends Resource
     protected static ?string $model = School::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static ?string $navigationLabel = '學校資料管理';
+
+    protected static string|\UnitEnum|null $navigationGroup = '校園午餐管理';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {

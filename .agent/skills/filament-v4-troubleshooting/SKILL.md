@@ -21,27 +21,38 @@ description: 當 Filament 報錯或語法不相容時，檢查是否符合 v4 �
 - **引用路徑**：`use Filament\Schemas\Schema;`
 - **關鍵方法**：使用 `->components([...])` 取代舊有的 `->schema([...])`。
 
-## 2. 導航屬性強型別 (PHP Invariant Properties)
+> [!CAUTION]
+> 在 v4 中，如果你看到原本程式碼使用 `Schema` 而不是 `Form`，請**不要隨意改回 `Form`**。這通常意味著該 Resource 已經對齊了 v4 的全新架構。
 
-PHP 8.3+ 與 Filament v4 對屬性型別要求嚴格一致。
+## 2. 導航屬性強型別與協變性 (Type Invariance)
+
+PHP 8.3+ 與 Filament v4 對於繼承的靜態屬性有嚴格的型別一致性要求。
 
 ### 🚨 錯誤特徵
 
-`Type of ...::$navigationGroup must be UnitEnum|string|null`
+`FatalError: Type of App\Filament\Resources\...\$navigationGroup must be UnitEnum|string|null`
 
 ### ✅ 修正方式
 
-必須明確標註聯集型別（Union Types）：
+靜態屬性 `$navigationIcon`、`$navigationGroup` 等必須與基底類別 `Filament\Resources\Resource` 的宣告 **完全匹配**。
 
 ```php
 use BackedEnum;
 use UnitEnum;
 
-protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
-protected static string | UnitEnum | null $navigationGroup = '學籍與補助';
+// 1. 圖標：必須包含 BackedEnum
+protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
+
+// 2. 群組名稱：必須包含 UnitEnum (或是補上 \UnitEnum 全域命名空間)
+protected static string | \UnitEnum | null $navigationGroup = '校園午餐管理';
+
+// 3. 標籤與排序：相對寬鬆，但建議加上型別標註
 protected static ?string $navigationLabel = '學生資料管理';
 protected static ?int $navigationSort = 1;
 ```
+
+> [!IMPORTANT]
+> 若沒有在檔案開頭 `use UnitEnum;`，則必須寫成 `string|\UnitEnum|null`，否則會報「類別找不到」或型別不匹配。
 
 ## 3. 組件分家：Forms vs Schemas
 
@@ -59,8 +70,15 @@ v4 的橫向改革，將各處的 Action 命名空間統一。
 
 ### ✅ 修正方式
 
-- 移除 `Filament\Tables\Actions\...` 引用。
-- 改用 **`Filament\Actions\...`** (包含 `CreateAction`, `EditAction`, `DeleteAction`, `DeleteBulkAction` 等)。
+- **不再區分來源**：移除所有 `Filament\Tables\Actions\...` 或 `Filament\Resources\Pages\Actions\...` 引用。
+- **全域唯一路徑**：一律改用 **`Filament\Actions\...`**。
+- **常用類別**：
+    - `Action`
+    - `CreateAction`
+    - `EditAction`
+    - `DeleteAction`
+    - `DeleteBulkAction`
+    - `BulkActionGroup`
 
 ## 5. SelectFilter 與閉包注入 (DI)
 

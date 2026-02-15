@@ -22,6 +22,12 @@ class SemesterResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = '學期資料管理';
+
+    protected static string|\UnitEnum|null $navigationGroup = '校園午餐管理';
+
+    protected static ?int $navigationSort = 3;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema

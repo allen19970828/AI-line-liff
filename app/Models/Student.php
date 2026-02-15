@@ -99,6 +99,14 @@ class Student extends Model
         return $this->hasMany(StudentStatusHistory::class)->orderBy('start_date', 'desc');
     }
 
+    /**
+     * 停餐申請紀錄 (多型關聯)
+     */
+    public function mealCancelRequests(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(MealCancelRequest::class, 'cancellable');
+    }
+
     // --- 業務邏輯 (時光溯源) ---
 
     /**

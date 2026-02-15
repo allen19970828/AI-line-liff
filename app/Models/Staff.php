@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -57,12 +56,20 @@ class Staff extends Model
 
     /**
      * [宗師新增] 連結到他帶的班級
-     * 這是「反向一對一」：因為 foreign key (school_staff_id) 是在 classrooms 表上
+     * 這是「反向一對一」或「一對多」：因為 foreign key (school_staff_id) 是在 classrooms 表上
      */
-    // public function classroom(): HasOne
-    // {
-    //     return $this->hasOne(Classroom::class, 'school_staff_id');
-    // }
+    public function classrooms(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Classroom::class, 'school_staff_id');
+    }
+
+    /**
+     * 停餐申請紀錄 (多型關聯)
+     */
+    public function mealCancelRequests(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(MealCancelRequest::class, 'cancellable');
+    }
 
     // --- 業務邏輯 (Business Logic) ---
 

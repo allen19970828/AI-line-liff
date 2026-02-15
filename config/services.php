@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    'line' => [
+        'liff_id' => env('LINE_LIFF_ID'),
+        'channel_secret' => env('LINE_CHANNEL_SECRET'),
+        'channel_access_token' => env('LINE_CHANNEL_ACCESS_TOKEN'),
+        'login_channel_id' => env('LINE_LOGIN_CHANNEL_ID'),
+        'login_channel_secret' => env('LINE_LOGIN_CHANNEL_SECRET'),
+        'client_id' => env('LINE_CLIENT_ID'), // Socialite Provider
+        'client_secret' => env('LINE_CLIENT_SECRET'), // Socialite Provider
+        'redirect' => env('LINE_REDIRECT_URI'), // Socialite Provider
+    ],
+
 ];

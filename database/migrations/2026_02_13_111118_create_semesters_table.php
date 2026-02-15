@@ -94,7 +94,10 @@ return new class extends Migration
 
         // [資料庫層級防禦]
         // 確保結束日期一定晚於開始日期 (PostgreSQL語法)
-        DB::statement('ALTER TABLE semesters ADD CONSTRAINT check_semester_dates CHECK (end_date >= start_date)');
+        // SQLite 不支援 ALTER TABLE ADD CONSTRAINT，故測試環境跳過
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE semesters ADD CONSTRAINT check_semester_dates CHECK (end_date >= start_date)');
+        }
     }
 
     /**

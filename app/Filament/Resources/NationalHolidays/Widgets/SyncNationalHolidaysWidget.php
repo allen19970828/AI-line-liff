@@ -30,7 +30,7 @@ class SyncNationalHolidaysWidget extends Widget implements HasForms
     public function form(Schema $schema): Schema
     {
         return $schema
-            ->schema([
+            ->components([
                 TextInput::make('year')
                     ->label('同步年份')
                     ->numeric()
