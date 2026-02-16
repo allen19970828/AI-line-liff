@@ -85,26 +85,92 @@ class SemesterForm
                                 ]),
                             ]),
 
-                        // [第三卷：業務規則]
-                        Section::make('規則設定')
-                            ->columns(2)
+                        // [第三卷：停餐業務規則]
+                        Section::make('停餐規則設定')
+                            ->description('控制各類請假的提前天數與退費條件')
+                            ->icon('heroicon-m-calendar-days')
+                            ->columns(3)
                             ->schema([
-                                TextInput::make('min_stop_days')
-                                    ->label('學生退餐(請假)')
-                                    ->numeric()->default(3)->suffix('天前')->required(),
+                                // === 提前天數 (Lead Time) ===
+                                TextInput::make('personal_stop_days')
+                                    ->label('事假提前天數')
+                                    ->helperText('一般個人請假需提前的天數')
+                                    ->numeric()
+                                    ->default(3)
+                                    ->suffix('天')
+                                    ->required()
+                                    ->minValue(0),
+
+                                TextInput::make('sick_stop_days')
+                                    ->label('病假提前天數')
+                                    ->helperText('病假通常可當天或前一天申請')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->suffix('天')
+                                    ->required()
+                                    ->minValue(0),
 
                                 TextInput::make('public_leave_days')
-                                    ->label('團體公假退餐')
-                                    ->numeric()->default(7)->suffix('天前')->required(),
+                                    ->label('公假/團體提前天數')
+                                    ->helperText('校外教學、團體活動等大規模停餐')
+                                    ->numeric()
+                                    ->default(10)
+                                    ->suffix('天')
+                                    ->required()
+                                    ->minValue(0),
 
-                                TextInput::make('staff_advance_days')
-                                    ->label('教職員訂餐')
-                                    ->numeric()->default(1)->suffix('天前')->required(),
+                                // === 最少停餐天數 (Minimum Duration) ===
+                                TextInput::make('min_stop_days')
+                                    ->label('個人最少停餐天數')
+                                    ->helperText('個人請假需連達此天數(供餐日)才退費')
+                                    ->numeric()
+                                    ->default(3)
+                                    ->suffix('天')
+                                    ->required()
+                                    ->minValue(1)
+                                    ->columnSpan(1),
+
+                                TextInput::make('group_min_stop_days')
+                                    ->label('團體最少停餐天數')
+                                    ->helperText('團體活動需連達此天數(供餐日)才退費')
+                                    ->numeric()
+                                    ->default(3)
+                                    ->suffix('天')
+                                    ->required()
+                                    ->minValue(1)
+                                    ->columnSpan(1),
+
+                                Toggle::make('auto_approve_mode')
+                                    ->label('自動核准模式')
+                                    ->helperText('開啟後，符合規則的停餐申請將自動設為「已核准」')
+                                    ->columnSpan(1),
+
+                                // === 截單時間 (Cut-off Time) ===
+                                TextInput::make('stop_cut_off_time')
+                                    ->label('截單時間')
+                                    ->helperText('每日此時間後不再受理申請')
+                                    ->type('time')
+                                    ->default('16:00')
+                                    ->required()
+                                    ->columnSpan(1),
+
+                                // === 教職員相關 ===
+                                TextInput::make('staff_stop_days')
+                                    ->label('教職員提前天數')
+                                    ->helperText('教職員停餐需提前的天數')
+                                    ->numeric()
+                                    ->default(5)
+                                    ->suffix('天')
+                                    ->required()
+                                    ->minValue(0)
+                                    ->columnSpan(1),
 
                                 Select::make('staff_meal_mode')
                                     ->label('教職員扣款模式')
                                     ->options(StaffMealMode::class)
-                                    ->default(StaffMealMode::Daily)->required(),
+                                    ->default(StaffMealMode::Daily)
+                                    ->required()
+                                    ->columnSpan(3),
                             ]),
                     ])
                     ->columnSpan(['lg' => 2]),

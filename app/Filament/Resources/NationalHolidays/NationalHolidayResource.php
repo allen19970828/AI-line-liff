@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\NationalHolidays;
 
 use App\Filament\Resources\NationalHolidays\Schemas\NationalHolidayForm; // 引入劍刃
-use App\Filament\Resources\NationalHolidays\Tables\NationalHolidayTable; // 引入劍脊
+use App\Filament\Resources\NationalHolidays\Tables\NationalHolidaysTable; // 引入劍脊
 use App\Models\NationalHoliday;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -35,7 +35,7 @@ class NationalHolidayResource extends Resource
     public static function table(Table $table): Table
     {
         // 宗師指點：一招制敵
-        return NationalHolidayTable::configure($table);
+        return NationalHolidaysTable::configure($table);
     }
 
     public static function getPages(): array

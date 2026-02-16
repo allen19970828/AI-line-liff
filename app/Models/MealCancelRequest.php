@@ -7,11 +7,10 @@ use App\Enums\Meals\CancelRequestStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MealCancelRequest extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'cancellable_id',
@@ -19,6 +18,9 @@ class MealCancelRequest extends Model
         'start_date',
         'end_date',
         'leave_type',
+        'scope_type',      // [新增]
+        'classroom_id',    // [新增]
+        'requested_by',    // [新增]
         'reason',
         'status',
         'origin',
@@ -45,5 +47,21 @@ class MealCancelRequest extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * 關聯：關聯班級 (僅班級活動停餐)
+     */
+    public function classroom(): BelongsTo
+    {
+        return $this->belongsTo(Classroom::class);
+    }
+
+    /**
+     * 關聯：申請人 (代為申請的老師)
+     */
+    public function requestedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'requested_by');
     }
 }

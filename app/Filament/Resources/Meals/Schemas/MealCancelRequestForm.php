@@ -10,7 +10,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class MealCancelRequestForm
 {
@@ -23,12 +25,34 @@ class MealCancelRequestForm
                     ->schema([
                         Grid::make(3)
                             ->schema([
-                                Select::make('student_id')
-                                    ->label('學生')
-                                    ->relationship('student', 'name')
+                                Select::make('cancellable_type')
+                                    ->label('申請人類型')
+                                    ->options([
+                                        \App\Models\Student::class => '學生',
+                                        \App\Models\Staff::class => '教職員',
+                                    ])
+                                    ->required()
+                                    ->reactive()
+                                    ->columnSpan(1),
+
+                                Select::make('cancellable_id')
+                                    ->label('申請人姓名')
+                                    ->relationship(
+                                        name: 'cancellable',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: function (Builder $query, Get $get) {
+                                            $type = $get('cancellable_type');
+                                            if ($type) {
+                                                return $query; // Filament handles the type filtering if name matches morphTo
+                                            }
+
+                                            return $query->whereRaw('1=0');
+                                        }
+                                    )
                                     ->searchable()
                                     ->preload()
                                     ->required()
+                                    ->hidden(fn (Get $get) => ! $get('cancellable_type'))
                                     ->columnSpan(1),
 
                                 DatePicker::make('start_date')

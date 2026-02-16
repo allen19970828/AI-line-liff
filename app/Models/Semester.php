@@ -34,6 +34,11 @@ class Semester extends Model
         'min_stop_days',
         'staff_stop_days',
         'public_leave_days',
+        'personal_stop_days', // [新增]
+        'sick_stop_days',     // [新增]
+        'stop_cut_off_time',  // [新增]
+        'group_min_stop_days', // [新增]
+        'auto_approve_mode',   // [新增]
         'staff_meal_mode',
         'meal_price',
         'cost_breakdown', // JSON
@@ -61,7 +66,10 @@ class Semester extends Model
         'cost_breakdown' => 'array',  // 自動將 JSON 字串轉為 PHP 陣列
         'fruit_days' => 'array',      // 自動將 JSON 字串轉為 PHP 陣列
         'is_active' => 'boolean',
+        'auto_approve_mode' => 'boolean', // [新增]
         'meal_price' => 'integer',
+        'min_stop_days' => 'integer',
+        'group_min_stop_days' => 'integer', // [新增]
     ];
 
     // =========================================================================
@@ -203,5 +211,35 @@ class Semester extends Model
 
         // 2. 若無例外，則看「常規」 (預設週末放假)
         return $date->isWeekend();
+    }
+
+    /**
+     * 計算兩個日期之間的供餐日 (Workdays) 總數
+     */
+    public function countWorkdays(string|Carbon $startDate, string|Carbon $endDate): int
+    {
+        $start = Carbon::parse($startDate)->startOfDay();
+        $end = Carbon::parse($endDate)->startOfDay();
+
+        if ($start->gt($end)) {
+            return 0;
+        }
+
+        $count = 0;
+        $current = $start->copy();
+
+        // 預先載入 exceptions 避免 N+1 (如果尚未載入)
+        if (! $this->relationLoaded('exceptions')) {
+            $this->load('exceptions');
+        }
+
+        while ($current->lte($end)) {
+            if (! $this->isDayOff($current)) {
+                $count++;
+            }
+            $current->addDay();
+        }
+
+        return $count;
     }
 }

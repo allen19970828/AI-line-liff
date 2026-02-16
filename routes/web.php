@@ -11,6 +11,8 @@ Route::get('/liff', function () {
     ]);
 })->name('liff.index');
 
+Route::get('/liff/survey/{id}', [\App\Http\Controllers\Liff\SurveyController::class, 'show'])->name('liff.survey');
+
 // LINE Socialite Login
 Route::get('/login/line', [\App\Http\Controllers\LineLoginController::class, 'redirect'])->name('login.line');
 Route::get('/login/line/callback', [\App\Http\Controllers\LineLoginController::class, 'callback']);

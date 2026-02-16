@@ -113,6 +113,43 @@ class SemesterService
         }
     }
 
+    /**
+     * 根據特定日期尋找學期 (精確匹配)
+     */
+    public function getSemesterByDate(string|Carbon $date, int $schoolId): ?Semester
+    {
+        $d = ($date instanceof Carbon) ? $date->toDateString() : $date;
+
+        return Semester::where('school_id', $schoolId)
+            ->whereDate('start_date', '<=', $d)
+            ->whereDate('end_date', '>=', $d)
+            ->active()
+            ->first();
+    }
+
+    /**
+     * 取得最相關的學期 (智慧導向)
+     * 1. 優先找「正在進行中」的學期
+     * 2. 若無，找「下一個即將開始」的學期 (寒暑假預填模式)
+     */
+    public function getMostRelevantSemester(int $schoolId): ?Semester
+    {
+        $today = now()->toDateString();
+
+        // Step 1: 優先找現在
+        $current = $this->getSemesterByDate($today, $schoolId);
+        if ($current) {
+            return $current;
+        }
+
+        // Step 2: 找未來最近的一個
+        return Semester::where('school_id', $schoolId)
+            ->whereDate('start_date', '>', $today)
+            ->active()
+            ->orderBy('start_date', 'asc')
+            ->first();
+    }
+
     protected function batchInsertCalendar(array $data): void
     {
         // 防呆：先檢查 SchoolCalendar 是否存在，若無則跳過以免報錯

@@ -20,6 +20,7 @@ class SurveyApiController extends Controller
     public function current(Request $request): JsonResponse
     {
         $user = $request->user();
+        $user->load('staff'); // 預載入 Staff
 
         // 1. 取得目前開放中的問卷
         $surveys = Survey::query()
@@ -31,15 +32,23 @@ class SurveyApiController extends Controller
                 // 2. 過濾角色 (例如：學生只能看到學生的問卷)
 
                 // 宗師特權：Super Admin 看全部
-                if ($user->hasRole('super_admin')) {
+                if ($user->canBypassSchoolScope()) {
                     return true;
                 }
 
                 // 如果問卷有指定角色，檢查使用者是否具備
                 if (! empty($survey->target_roles)) {
-                    // 使用 Spatie 的 hasAnyRole 檢查
-                    // 注意：這裡假設 target_roles 存的是 Role Name (e.g. 'student')
-                    return $user->hasAnyRole($survey->target_roles);
+                    $userRoles = [];
+                    // 目前系統實作：User -> Staff (OneToOne)
+                    if ($user->staff) {
+                        $userRoles[] = 'staff';
+                        // 也可以加入更細的 role 檢查，但目前資源只分 staff/student/parent
+                    }
+
+                    // 未來擴充：User -> Student (透過 Linkage)
+                    // if ($user->student) { $userRoles[] = 'student'; }
+
+                    return ! empty(array_intersect($survey->target_roles, $userRoles));
                 }
 
                 return true;
@@ -76,10 +85,6 @@ class SurveyApiController extends Controller
             ->where('user_id', $user->id)
             ->exists();
 
-        // 為了讓前端統一格式，我們包在 data 陣列裡 (雖然只有一筆，但跟 current 格式統一比較好? 或者前端改?)
-        // current 回傳的是 List, 這裡回傳 Single
-        // 為了方便前端 renderSurvey，直接回傳 survey 物件即可，但要符合 JsonResponse
-
         return response()->json([
             'data' => $survey,
         ]);
@@ -92,12 +97,12 @@ class SurveyApiController extends Controller
     public function submit(Request $request, Survey $survey): JsonResponse
     {
         $user = $request->user();
+        $user->load('staff');
 
         // 1. 基本驗證
         // 宗師註解：提交時還是要檢查是否 open，除非是測試模式？暫時先不放水
-        if (! $survey->is_open) {
-            // return response()->json(['message' => '問卷已結束或尚未開始'], 403);
-            // 為了 Preview 方便測試，先拿掉嚴格檢查？不，正式環境還是要擋
+        if (! $survey->status === 'active') { // 簡單檢查狀態
+            return response()->json(['message' => '問卷已結束或尚未開始'], 403);
         }
 
         // 檢查是否已填寫 (防止重複提交)
@@ -116,6 +121,16 @@ class SurveyApiController extends Controller
 
         try {
             DB::transaction(function () use ($survey, $user, $validated, $request) {
+                // Determine Snapshot Data
+                $role = null;
+                $grade = null;
+                $class = null;
+
+                if ($user->staff) {
+                    $role = 'staff'; // 簡單標記
+                    // $grade = ... staff通常沒年級
+                }
+
                 // 2. 建立 Response (Snapshot Pattern) 📸
                 $response = SurveyResponse::create([
                     'survey_id' => $survey->id,
@@ -124,9 +139,9 @@ class SurveyApiController extends Controller
                     'ip_address' => $request->ip(),
 
                     // 關鍵 Snapshot：記錄當下身分
-                    'snapshot_role' => $user->role->value ?? null,
-                    'snapshot_grade' => $user->student?->classroom?->grade_level?->value ?? null, // 假設關聯路徑
-                    'snapshot_class' => $user->student?->classroom?->name ?? null,
+                    'snapshot_role' => $role,
+                    'snapshot_grade' => $grade,
+                    'snapshot_class' => $class,
                     'snapshot_name' => $user->name,
                 ]);
 
@@ -163,6 +178,7 @@ class SurveyApiController extends Controller
     public function pending(Request $request): JsonResponse
     {
         $user = $request->user();
+        $user->load('staff');
 
         $surveys = Survey::query()
             ->open()
@@ -174,12 +190,17 @@ class SurveyApiController extends Controller
             ->get()
             ->filter(function (Survey $survey) use ($user) {
                 // 過濾角色
-                if ($user->hasRole('super_admin')) {
+                if ($user->canBypassSchoolScope()) {
                     return true;
                 }
 
                 if (! empty($survey->target_roles)) {
-                    return $user->hasAnyRole($survey->target_roles);
+                    $userRoles = [];
+                    if ($user->staff) {
+                        $userRoles[] = 'staff';
+                    }
+
+                    return ! empty(array_intersect($survey->target_roles, $userRoles));
                 }
 
                 return true;
@@ -205,7 +226,7 @@ class SurveyApiController extends Controller
             ->with(['questions']) // 視需求是否載入題目
             ->orderBy('id', 'desc')
             ->get()
-            ->map(function ($survey) use ($user) {
+            ->map(function (Survey $survey) use ($user) {
                 // 附加填寫時間 (取最近一次)
                 $lastResponse = $survey->responses()
                     ->where('user_id', $user->id)

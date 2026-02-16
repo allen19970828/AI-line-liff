@@ -3,15 +3,15 @@
 namespace App\Filament\Resources\NationalHolidays\Tables;
 
 use App\Models\NationalHoliday;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class NationalHolidayTable
+class NationalHolidaysTable
 {
     public static function configure(Table $table): Table
     {
@@ -35,8 +35,8 @@ class NationalHolidayTable
                 TextColumn::make('type')
                     ->label('類型')
                     ->badge()
-                    ->formatStateUsing(fn(NationalHoliday $record) => $record->getTypeName())
-                    ->color(fn(NationalHoliday $record) => $record->getColor())
+                    ->formatStateUsing(fn (NationalHoliday $record) => $record->getTypeName())
+                    ->color(fn (NationalHoliday $record) => $record->getColor())
                     ->sortable(),
 
                 // [4. 年份]
@@ -52,7 +52,7 @@ class NationalHolidayTable
                 SelectFilter::make('year')
                     ->label('年份')
                     ->options(
-                        fn() => NationalHoliday::query()
+                        fn () => NationalHoliday::query()
                             ->select('year')
                             ->distinct()
                             ->orderBy('year', 'desc')
@@ -73,7 +73,7 @@ class NationalHolidayTable
                     ->label('異動紀錄')
                     ->icon('heroicon-m-clock')
                     ->color('info')
-                    ->url(fn($record) => \App\Filament\Resources\NationalHolidays\NationalHolidayResource::getUrl('activities', ['record' => $record])),
+                    ->url(fn ($record) => \App\Filament\Resources\NationalHolidays\NationalHolidayResource::getUrl('activities', ['record' => $record])),
                 EditAction::make(),
                 DeleteAction::make(),
             ])

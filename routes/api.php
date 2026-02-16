@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/liff', [\App\Http\Controllers\Api\AuthController::class, 'liffLogin']);
+Route::post('/line/webhook', [\App\Http\Controllers\Api\LineBotController::class, 'handle']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
@@ -20,5 +21,27 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Meal Cancellation (LIFF)
     Route::get('/cancellation/targets', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'getTargets']);
+    Route::post('/cancellation/search-student', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'searchStudent']);
     Route::post('/meal-cancellation', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'store']);
+    Route::post('/meal-cancellation/class-activity', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'storeClassActivity']);
+    Route::post('/meal-cancellation/group', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'storeGroupCancellation']);
+
+    // Meal Cancellation Groups
+    Route::apiResource('meal-cancellation-groups', \App\Http\Controllers\Api\Liff\MealCancellationGroupController::class);
+
+    // Student Search (for group selection)
+    Route::get('/students/search', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'searchStudents']);
+
+    // Surveys
+    Route::prefix('surveys')->group(function () {
+        Route::get('current', [\App\Http\Controllers\Api\SurveyApiController::class, 'current']);
+        Route::get('pending', [\App\Http\Controllers\Api\SurveyApiController::class, 'pending']);
+        Route::get('history', [\App\Http\Controllers\Api\SurveyApiController::class, 'history']);
+        Route::get('{survey}', [\App\Http\Controllers\Api\SurveyApiController::class, 'show']);
+        Route::post('{survey}/submit', [\App\Http\Controllers\Api\SurveyApiController::class, 'submit']);
+    });
+
+    // Meal Complaints (LIFF)
+    Route::get('/meal-complaints', [\App\Http\Controllers\Api\Liff\MealComplaintController::class, 'index']);
+    Route::post('/meal-complaints', [\App\Http\Controllers\Api\Liff\MealComplaintController::class, 'store']);
 });

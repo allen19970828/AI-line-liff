@@ -113,6 +113,14 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     }
 
     /**
+     * 關聯：教職員檔案 (一對一)
+     */
+    public function staff(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Staff::class);
+    }
+
+    /**
      * Determine if the user can access the Filament panel.
      */
     public function canAccessPanel(\Filament\Panel $panel): bool

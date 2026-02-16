@@ -81,7 +81,7 @@ class StudentImportData
         $dietStr = $row['飲食'] ?? $row['飲食 (選填)'] ?? '';
         $dietaryType = match (true) {
             str_contains($dietStr, '全素') => DietaryType::Vegan,
-            str_contains($dietStr, '蛋奶') => DietaryType::OvoLactoVegetarian,
+            str_contains($dietStr, '蛋奶') => DietaryType::OvoLacto,
             str_contains($dietStr, '素') => DietaryType::Vegetarian,
             default => DietaryType::Meat,
         };

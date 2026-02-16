@@ -66,21 +66,49 @@ v4 將「佈局元件」與「表單輸入元件」的命名空間拆開了。
 
 ## 4. 全域 Actions 統一
 
-v4 的橫向改革，將各處的 Action 命名空間統一。
+v4 將過去分散各處的 Action 命名空間統一。即使是在 Table 內使用的 Actions，也已不再從 `Filament\Tables\Actions` 引用。
+
+### 🚨 錯誤特徵
+
+`Class "Filament\Tables\Actions\EditAction" not found`
 
 ### ✅ 修正方式
 
-- **不再區分來源**：移除所有 `Filament\Tables\Actions\...` 或 `Filament\Resources\Pages\Actions\...` 引用。
-- **全域唯一路徑**：一律改用 **`Filament\Actions\...`**。
-- **常用類別**：
-    - `Action`
-    - `CreateAction`
-    - `EditAction`
-    - `DeleteAction`
-    - `DeleteBulkAction`
-    - `BulkActionGroup`
+- **統一路徑**：一律改用 **`Filament\Actions\...`**。
+- **常用類別與新位置**：
+    - `Filament\Actions\Action`
+    - `Filament\Actions\CreateAction`
+    - `Filament\Actions\EditAction`
+    - `Filament\Actions\DeleteAction`
+    - `Filament\Actions\DeleteBulkAction`
+    - `Filament\Actions\BulkActionGroup`
 
-## 5. SelectFilter 與閉包注入 (DI)
+---
+
+## 5. 工具類別 (Utilities) 的新家
+
+在 v4 中，用於閉包注入的 `Get` 與 `Set` 類別發生了遷移。
+
+### ✅ 修正方式
+
+若在 `visible()`, `disabled()`, `reactive()` 等閉包中使用型別提示，**必須**引用正確的類別：
+
+- **`Get`**：`Filament\Schemas\Components\Utilities\Get`
+- **`Set`**：`Filament\Schemas\Components\Utilities\Set`
+
+```php
+use Filament\Schemas\Components\Utilities\Get;
+
+// ✅ 正確：明確指定 Get 類別
+->visible(fn(Get $get) => in_array($get('type'), ['select', ...]))
+```
+
+> [!WARNING]
+> 切勿將其型別提示為 `\Closure`，否則會拋出 `TypeError: Argument #1 ($get) must be of type Closure, Filament\Schemas\Components\Utilities\Get given`。這是因為 v4 注入的是一個 **Invokable Object** (可呼叫物件)，而非原生的閉包。
+
+---
+
+## 6. SelectFilter 與閉包注入 (DI)
 
 ### 🚨 錯誤特徵
 
@@ -98,7 +126,7 @@ use Illuminate\Database\Eloquent\Builder;
 ->relationship('classroom', 'name', fn(Builder $query) => $query->where(...))
 ```
 
-## 6. 命名空間與目錄規範
+## 7. 命名空間與目錄規範
 
 - **目錄複數**：`App\Filament\Resources\Students` (複數)。
 - **Namespace 校正**：確保目錄與 Namespace 完全對應，若有 `Student` (單數) 混用會導致 Autoload 失敗。

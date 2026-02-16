@@ -19,15 +19,20 @@ class MealCancelRequestsTable
     {
         return $table
             ->columns([
-                TextColumn::make('student.name')
-                    ->label('學生姓名')
+                TextColumn::make('cancellable.name')
+                    ->label('申請人姓名')
                     ->sortable()
                     ->searchable(),
 
-                TextColumn::make('student.student_code')
-                    ->label('學號')
-                    ->sortable()
-                    ->searchable(),
+                TextColumn::make('cancellable_type')
+                    ->label('類型')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        \App\Models\Student::class => '學生',
+                        \App\Models\Staff::class => '教職員',
+                        default => $state,
+                    })
+                    ->badge()
+                    ->sortable(),
 
                 TextColumn::make('start_date')
                     ->label('開始日期')
@@ -38,6 +43,26 @@ class MealCancelRequestsTable
                     ->label('結束日期')
                     ->date('Y/m/d')
                     ->sortable(),
+
+                TextColumn::make('duration')
+                    ->label('停餐天數')
+                    ->state(function (MealCancelRequest $record): string {
+                        // 尋找對應學期
+                        $semester = \App\Models\Semester::where('school_id', $record->cancellable->school_id)
+                            ->whereDate('start_date', '<=', $record->start_date)
+                            ->whereDate('end_date', '>=', $record->end_date)
+                            ->first();
+
+                        if (! $semester) {
+                            return 'N/A';
+                        }
+
+                        $days = $semester->countWorkdays($record->start_date, $record->end_date);
+
+                        return "{$days} 天";
+                    })
+                    ->badge()
+                    ->color('info'),
 
                 TextColumn::make('leave_type')
                     ->label('假別')

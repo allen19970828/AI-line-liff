@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\DTO\StaffImportData;
+use App\DTOs\StaffImportData;
 use App\Models\Staff; // [修正] 使用正確的 Model 名稱
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

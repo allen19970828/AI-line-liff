@@ -18,8 +18,8 @@ class LineBotController extends Controller
     public function handle(Request $request)
     {
         // 1. 準備金鑰
-        $channelSecret = env('LINE_CHANNEL_SECRET');
-        $channelToken = env('LINE_CHANNEL_ACCESS_TOKEN');
+        $channelSecret = config('services.line.channel_secret');
+        $channelToken = config('services.line.channel_access_token');
 
         // 2. 取得 LINE 的簽章 (X-Line-Signature)
         $signature = $request->header(HTTPHeader::LINE_SIGNATURE);
@@ -69,8 +69,12 @@ class LineBotController extends Controller
             // 🔐 宗師邏輯區：建立 LINE 身分連結
             // ==========================================
 
-            // 1. 嘗試透過 LINE ID 找使用者
-            $user = \App\Models\User::where('line_id', $lineUserId)->first();
+            // 1. 嘗試透過 LINE ID 找綁定帳號
+            $lineAccount = \App\Models\LineAccount::withoutGlobalScopes()
+                ->where('line_user_id', $lineUserId)
+                ->first();
+
+            $user = $lineAccount?->user;
 
             if (! $user) {
                 // 如果還沒綁定，雖然我們還是可以回話，但 AI 那邊如果用到 auth()->user() 會炸開

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTO;
+namespace App\DTOs;
 
 use App\Enums\DietaryType;
 use App\Enums\SemesterStage;
@@ -39,7 +39,7 @@ class StaffImportData
         $dietStr = trim(Arr::get($row, '飲食') ?? Arr::get($row, 'diet') ?? '');
         $dietaryType = match (true) {
             str_contains($dietStr, '全素') => DietaryType::Vegan,
-            str_contains($dietStr, '蛋奶') => DietaryType::OvoLactoVegetarian, // 假設你有這個 Enum
+            str_contains($dietStr, '蛋奶') => DietaryType::OvoLacto,
             str_contains($dietStr, '素') => DietaryType::Vegetarian, // 廣義素食
             default => DietaryType::Meat,
         };

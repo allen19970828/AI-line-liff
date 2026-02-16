@@ -18,7 +18,10 @@ class LineIdentityService
     {
         return DB::transaction(function () use ($socialiteUser) {
             // 1. 嘗試透過 line_user_id 尋找現有的 LineAccount
-            $lineAccount = LineAccount::where('line_user_id', $socialiteUser->getId())->first();
+            // CRITICAL: Must bypass global scopes to find accounts across all schools
+            $lineAccount = LineAccount::withoutGlobalScopes()
+                ->where('line_user_id', $socialiteUser->getId())
+                ->first();
 
             if ($lineAccount) {
                 // 情境 A: 已經綁定過，更新 Token 與 Profile
@@ -54,7 +57,13 @@ class LineIdentityService
         );
 
         // 2. 建立 LineAccount 連結
-        $this->updateLineProfile(new LineAccount(['user_id' => $user->id]), $socialiteUser);
+        // CRITICAL: Explicitly set school_id from user to satisfy NOT NULL constraint
+        $lineAccount = new LineAccount([
+            'user_id' => $user->id,
+            'school_id' => $user->school_id, // Inherit from user (might be null initially)
+        ]);
+
+        $this->updateLineProfile($lineAccount, $socialiteUser);
 
         return $user;
     }

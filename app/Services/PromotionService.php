@@ -69,6 +69,7 @@ class PromotionService
                     ->where('grade', $g)
                     ->get();
 
+                /** @var Classroom $class */
                 foreach ($classrooms as $class) {
                     // 1. 升級年級屬性
                     $class->grade = GradeLevel::from($g + 1);
@@ -91,7 +92,7 @@ class PromotionService
         // ... (保持原本的畢業邏輯)
         Student::where('school_id', $schoolId)
             ->where('status', StudentStatus::Active)
-            ->whereHas('classroom', fn ($q) => $q->where('grade', GradeLevel::Grade6))
+            ->whereHas('classroom', fn ($q) => $q->where('grade', GradeLevel::GRADE_6))
             ->update([
                 'status' => StudentStatus::Graduated,
                 'classroom_id' => null,
