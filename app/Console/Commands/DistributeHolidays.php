@@ -23,13 +23,9 @@ class DistributeHolidays extends Command
         $startTime = microtime(true);
 
         // 1. 找出所有「進行中」且「啟用」的學期
-        // 使用 chunk 避免記憶體爆炸 (假設你有 500 間學校)
-        Semester::active()->current()->chunk(100, function ($semesters) {
-
-            foreach ($semesters as $semester) {
-                $this->processSemester($semester);
-            }
-
+        // 使用 each() 確保模型的完整性與 Scope 作用正確
+        Semester::active()->current()->each(function (Semester $semester) {
+            $this->processSemester($semester);
         });
 
         $duration = round(microtime(true) - $startTime, 2);
@@ -42,10 +38,9 @@ class DistributeHolidays extends Command
     private function processSemester(Semester $semester)
     {
         // 2. 撈出該學期時間範圍內的「總表假日」
-        $masterHolidays = NationalHoliday::inRange(
-            $semester->start_date,
-            $semester->end_date
-        )->get();
+        $masterHolidays = NationalHoliday::query()
+            ->inRange($semester->start_date, $semester->end_date)
+            ->get();
 
         if ($masterHolidays->isEmpty()) {
             return;
@@ -53,6 +48,7 @@ class DistributeHolidays extends Command
 
         $addedCount = 0;
 
+        /** @var \App\Models\NationalHoliday $holiday */
         foreach ($masterHolidays as $holiday) {
             // [核心心法：只補不改]
 
@@ -88,7 +84,7 @@ class DistributeHolidays extends Command
         }
 
         if ($addedCount > 0) {
-            $this->line("  ✅ [{$semester->school->name}] ({$semester->code})：自動補入 {$addedCount} 筆。");
+            $this->line("  ✅ [{$semester->school?->name}] ({$semester->code})：自動補入 {$addedCount} 筆。");
         }
     }
 }

@@ -18,11 +18,13 @@ class MealComplaint extends Model
         'status',
         'caterer_reply',
         'resolved_at',
+        'rating', // [新增] 評分 (1-5)
     ];
 
     protected $casts = [
         'occurred_at' => 'date',
         'resolved_at' => 'datetime',
+        'rating' => 'integer',
     ];
 
     /**

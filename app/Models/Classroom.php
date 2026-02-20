@@ -78,8 +78,28 @@ class Classroom extends Model
     protected function fullName(): Attribute
     {
         return Attribute::make(
-            get: fn () => "{$this->grade->getLabel()}{$this->class_name}",
+            get: function () {
+                $gradeLabel = $this->grade->getLabel();
+                $className = $this->class_name;
+
+                // 移除 "年級" 字眼來進行比對 (例如 "四年級" -> "四年")
+                $gradeKeyword = str_replace('級', '', $gradeLabel);
+
+                if (str_contains($className, $gradeKeyword)) {
+                    return $className;
+                }
+
+                return "{$gradeLabel}{$className}";
+            },
         );
+    }
+
+    /**
+     * 取得班級全名 (Student Model 的相容別名)
+     */
+    protected function classFullName(): Attribute
+    {
+        return $this->fullName();
     }
 
     // --- Relationships ---

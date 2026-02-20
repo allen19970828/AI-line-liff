@@ -46,7 +46,7 @@ class NotifyLunchSecretarySummary extends Command
 
     protected function generateReport(\App\Models\Semester $semester, string $date): void
     {
-        // 取得目標日期在該校的所有已核准停餐申請
+        // 1. 取得目標日期在該校的所有已核准停餐申請
         $requests = \App\Models\MealCancelRequest::query()
             ->whereHasMorph('cancellable', [\App\Models\Student::class, \App\Models\Staff::class], function ($query) use ($semester) {
                 $query->where('school_id', $semester->school_id);
@@ -76,9 +76,51 @@ class NotifyLunchSecretarySummary extends Command
             }
         }
 
+        $reportMessage .= "\n\n(系統自動發送，無需回覆)";
+
         $this->line($reportMessage);
 
-        // 宗師指點：將報表寫入系統日誌，方便午餐秘書查看 (或未來接軌 LINE Notify)
+        // 2. 寫入 Log
         \Illuminate\Support\Facades\Log::channel('daily')->info($reportMessage);
+
+        // 3. 宗師絕技：找出該校的午餐秘書並發送 LINE
+        // 假設角色名稱為 'lunch_secretary' (需確認資料庫中的實際 Role Name，這裡先用通用猜測)
+        // 且必須已經綁定 LINE 帳號
+        $secretaries = \App\Models\User::role('lunch_secretary')
+            ->where('school_id', $semester->school_id)
+            ->whereHas('lineAccount')
+            ->get();
+
+        if ($secretaries->isEmpty()) {
+            $this->warn("學校 [{$semester->school->name}] 無綁定 LINE 的午餐秘書，無法推播。");
+
+            return;
+        }
+
+        // 初始化 LINE Client
+        $httpClient = new \GuzzleHttp\Client;
+        $config = new \LINE\Clients\MessagingApi\Configuration;
+        $config->setAccessToken(config('services.line.channel_access_token'));
+        $messagingApi = new \LINE\Clients\MessagingApi\Api\MessagingApiApi($httpClient, $config);
+
+        foreach ($secretaries as $secretary) {
+            try {
+                $textMessage = new \LINE\Clients\MessagingApi\Model\TextMessage([
+                    'type' => 'text',
+                    'text' => $reportMessage,
+                ]);
+
+                $pushRequest = new \LINE\Clients\MessagingApi\Model\PushMessageRequest([
+                    'to' => $secretary->lineAccount->line_user_id,
+                    'messages' => [$textMessage],
+                ]);
+
+                $messagingApi->pushMessage($pushRequest);
+                $this->info("已推播給秘書：{$secretary->name}");
+
+            } catch (\Exception $e) {
+                $this->error("推播失敗 [{$secretary->name}]: ".$e->getMessage());
+            }
+        }
     }
 }

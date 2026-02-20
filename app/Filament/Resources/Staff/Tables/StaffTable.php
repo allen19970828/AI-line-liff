@@ -21,6 +21,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table; // [新增]
+use LaraZeus\Qr\Facades\Qr;
 
 class StaffTable
 {
@@ -36,14 +37,28 @@ class StaffTable
                     ->sortable()
                     ->weight('bold'),
 
-                // 卡號
+                // 卡號 (QR Code)
                 TextColumn::make('lunch_code')
-                    ->label('卡號')
-                    ->icon('heroicon-m-qr-code')
-                    ->copyable()
+                    ->label('掃描卡號')
+                    ->html()
+                    ->formatStateUsing(fn (?string $state) => $state ? Qr::output(
+                        data: $state,
+                        options: ['size' => '80', 'margin' => '0', 'type' => 'svg']
+                    ) : null)
                     ->searchable()
-                    ->color('gray')
-                    ->toggleable(isToggledHiddenByDefault: true), // 預設隱藏
+                    ->toggleable(),
+
+                // LINE 狀態 (關聯顯示)
+                TextColumn::make('line_display_name')
+                    ->label('LINE 暱稱')
+                    ->state(fn ($record) => $record->lineAccount?->display_name ?? '未綁定')
+                    ->description(fn ($record) => $record->lineAccount ? '已連動 LINE 帳號' : null)
+                    ->color(fn ($record) => $record->lineAccount ? 'success' : 'gray')
+                    ->searchable(query: function ($query, string $search) {
+                        $query->whereHas('lineAccount', function ($q) use ($search) {
+                            $q->where('display_name', 'ilike', "%{$search}%");
+                        });
+                    }),
 
                 // 身分
                 TextColumn::make('staff_role')

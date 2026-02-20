@@ -12,7 +12,18 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class School extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity; // [關鍵] 啟用心法
+    use HasFactory, LogsActivity, SoftDeletes; // [關鍵] 啟用心法
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($school) {
+            if (! $school->checkin_code) {
+                $school->checkin_code = 'chk_'.strtolower(\Illuminate\Support\Str::random(12));
+            }
+        });
+    }
 
     /**
      * [第一要素：防護罩]
@@ -30,6 +41,7 @@ class School extends Model
         'phone',
         'website',
         'is_active',
+        'checkin_code',
         // 注意：id, created_at, updated_at, deleted_at 不需要寫在這裡，系統會自動處理
     ];
 

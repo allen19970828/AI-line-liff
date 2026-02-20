@@ -6,14 +6,14 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
         </button>
-        <h2 class="text-xl font-bold ml-1">停餐申請</h2>
+        <h2 class="text-xl font-bold ml-1" x-text="cancellation.mainTab === 'staff' ? '自己停餐' : '學生停餐'"></h2>
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-5">
 
-        <!-- [主 Tab] 教職員 vs 學生 -->
-        <div class="flex p-1 bg-gray-100 rounded-xl">
-            <button @click="cancellation.mainTab = 'staff'"
+        <!-- [主 Tab] 教職員 vs 學生 (Hidden, controlled by dashboard entry) -->
+        <div class="hidden p-1 bg-gray-100 rounded-xl">
+            <button @click="cancellation.mainTab = 'staff'" x-show="settings.staffMealMode === 'monthly'"
                 :class="cancellation.mainTab === 'staff' ? 'bg-white shadow text-red-600 font-bold' : 'text-gray-400'"
                 class="flex-1 py-3 rounded-lg text-sm transition-all">🧑‍🏫 教職員</button>
             <button @click="cancellation.mainTab = 'student'"
@@ -40,24 +40,37 @@
                     <label class="block text-xs font-medium text-gray-600 mb-1">開始日期</label>
                     <input type="date" x-model="cancellation.startDate" :min="new Date().toISOString().split('T')[0]"
                         class="w-full bg-slate-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none">
+                    <!-- [新增] 假日提示 -->
+                    <template x-if="getHolidayHint(cancellation.startDate)">
+                        <div class="mt-1 text-[10px] text-red-500 font-bold"
+                            x-text="'【提醒】' + getHolidayHint(cancellation.startDate) + '，無須停餐'"></div>
+                    </template>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">結束日期</label>
                     <input type="date" x-model="cancellation.endDate" :min="cancellation.startDate"
                         class="w-full bg-slate-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none">
+                    <!-- [新增] 假日提示 -->
+                    <template x-if="getHolidayHint(cancellation.endDate)">
+                        <div class="mt-1 text-[10px] text-red-500 font-bold"
+                            x-text="'【提醒】' + getHolidayHint(cancellation.endDate) + '，無須停餐'"></div>
+                    </template>
                 </div>
             </div>
 
             <!-- 假別選擇 -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">停餐原因</label>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-3 gap-3">
                     <button @click="cancellation.leaveType = 'personal'"
                         :class="cancellation.leaveType === 'personal' ? 'bg-red-50 border-red-500 text-red-700' : 'bg-gray-50 border-gray-200'"
                         class="py-3 rounded-xl border-2 font-bold transition-all">事假</button>
                     <button @click="cancellation.leaveType = 'sick'"
                         :class="cancellation.leaveType === 'sick' ? 'bg-red-50 border-red-500 text-red-700' : 'bg-gray-50 border-gray-200'"
                         class="py-3 rounded-xl border-2 font-bold transition-all">病假</button>
+                    <button @click="cancellation.leaveType = 'administrative'"
+                        :class="cancellation.leaveType === 'administrative' ? 'bg-red-50 border-red-500 text-red-700' : 'bg-gray-50 border-gray-200'"
+                        class="py-3 rounded-xl border-2 font-bold transition-all">公假</button>
                 </div>
             </div>
 
@@ -137,11 +150,21 @@
                         <input type="date" x-model="cancellation.startDate"
                             :min="new Date().toISOString().split('T')[0]"
                             class="w-full bg-slate-50 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                        <!-- [新增] 假日提示 -->
+                        <template x-if="getHolidayHint(cancellation.startDate)">
+                            <div class="mt-1 text-[10px] text-red-500 font-bold"
+                                x-text="'【提醒】' + getHolidayHint(cancellation.startDate) + '，無須停餐'"></div>
+                        </template>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">結束日期</label>
                         <input type="date" x-model="cancellation.endDate" :min="cancellation.startDate"
                             class="w-full bg-slate-50 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                        <!-- [新增] 假日提示 -->
+                        <template x-if="getHolidayHint(cancellation.endDate)">
+                            <div class="mt-1 text-[10px] text-red-500 font-bold"
+                                x-text="'【提醒】' + getHolidayHint(cancellation.endDate) + '，無須停餐'"></div>
+                        </template>
                     </div>
                 </div>
 
@@ -255,7 +278,7 @@
 
                     <!-- 班級選取 (購物車模式) -->
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                        <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
+                        <label class="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
                             <span>🏫 從班級選取</span>
                             <span class="text-xs font-normal text-gray-400">(點選加入清單)</span>
                         </label>
@@ -392,7 +415,8 @@
                         <div class="flex justify-between items-center mb-2">
                             <label class="text-sm font-medium text-gray-700">
                                 已選擇 <span class="text-purple-600 font-bold"
-                                    x-text="cancellation.selectedStudents.length"></span> 位學生
+                                    x-text="cancellation.selectedStudents.length"></span>
+                                位學生
                             </label>
                             <button @click="cancellation.selectedStudents = []" type="button"
                                 class="text-xs text-red-600 hover:text-red-700 font-medium">
@@ -438,11 +462,21 @@
                             <input type="date" x-model="cancellation.startDate"
                                 :min="new Date().toISOString().split('T')[0]"
                                 class="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <!-- [新增] 假日提示 -->
+                            <template x-if="getHolidayHint(cancellation.startDate)">
+                                <div class="mt-1 text-[10px] text-red-500 font-bold"
+                                    x-text="'【提醒】' + getHolidayHint(cancellation.startDate) + '，無須停餐'"></div>
+                            </template>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">結束日期 (選填)</label>
                             <input type="date" x-model="cancellation.endDate" :min="cancellation.startDate"
                                 class="w-full bg-slate-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                            <!-- [新增] 假日提示 -->
+                            <template x-if="getHolidayHint(cancellation.endDate)">
+                                <div class="mt-1 text-[10px] text-red-500 font-bold"
+                                    x-text="'【提醒】' + getHolidayHint(cancellation.endDate) + '，無須停餐'"></div>
+                            </template>
                         </div>
                     </div>
 

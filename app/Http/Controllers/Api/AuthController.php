@@ -15,6 +15,8 @@ class AuthController extends Controller
      */
     public function liffLogin(Request $request)
     {
+        Log::debug('liffLogin endpoint hit', ['idToken_length' => strlen($request->input('idToken'))]);
+
         $request->validate([
             'idToken' => 'required|string',
         ]);
@@ -29,7 +31,7 @@ class AuthController extends Controller
                 'client_id' => $channelId,
             ]);
 
-            if (! $response->successful()) {
+            if (!$response->successful()) {
                 Log::error('LINE ID Token Verification Failed', ['response' => $response->json()]);
 
                 return response()->json(['message' => 'Invalid ID Token'], 401);
@@ -60,16 +62,44 @@ class AuthController extends Controller
             // $user->tokens()->delete();
             $token = $user->createToken('liff-token')->plainTextToken;
 
+            // Determine Staff Meal Mode
+            $staffMealMode = 'monthly';
+
+            // Bypass global scopes because Auth::user() is not set during token issuance
+            $staff = \App\Models\Staff::withoutGlobalScopes()
+                ->where('user_id', $user->id)
+                ->first();
+
+            if ($staff && $staff->school_id) {
+                $currentSemester = \App\Models\Semester::withoutGlobalScopes()
+                    ->where('school_id', $staff->school_id)
+                    ->current()
+                    ->first();
+
+                if ($currentSemester) {
+                    $staffMealMode = $currentSemester->staff_meal_mode->value ?? 'monthly';
+                    Log::debug("Setting staff_meal_mode to {$staffMealMode} for user {$user->id} (School: {$staff->school_id}, Semester: {$currentSemester->id})");
+                } else {
+                    Log::debug("No current semester found for user {$user->id} (School: {$staff->school_id})");
+                }
+            } else {
+                Log::warning("User {$user->id} has no staff or school data");
+            }
+
+            // Also load school without global scopes for the response
+            $school = \App\Models\School::withoutGlobalScopes()->find($user->school_id);
+
             return response()->json([
                 'token' => $token,
-                'user' => $user->load('school'), // Eager load school for frontend
-                'school_name' => $user->school?->name,
+                'user' => $user,
+                'school_name' => $school?->name,
+                'staff_meal_mode' => $staffMealMode,
             ]);
 
         } catch (\Exception $e) {
             Log::error('LIFF Login Exception', ['error' => $e->getMessage()]);
 
-            return response()->json(['message' => 'Login failed: '.$e->getMessage()], 500);
+            return response()->json(['message' => 'Login failed: ' . $e->getMessage()], 500);
         }
     }
 }

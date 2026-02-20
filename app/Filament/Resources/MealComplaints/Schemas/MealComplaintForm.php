@@ -51,6 +51,7 @@ class MealComplaintForm
                         FileUpload::make('photo_path')
                             ->label('食安證據照片')
                             ->image()
+                            ->disk('public') // 強制使用 public disk
                             ->directory('complaints')
                             ->visibility('public')
                             ->columnSpanFull(),

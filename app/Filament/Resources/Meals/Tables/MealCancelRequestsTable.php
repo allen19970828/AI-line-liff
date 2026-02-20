@@ -5,7 +5,9 @@ namespace App\Filament\Resources\Meals\Tables;
 use App\Enums\Meals\CancelRequestStatus;
 use App\Models\MealCancelRequest;
 use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -23,6 +25,15 @@ class MealCancelRequestsTable
                     ->label('申請人姓名')
                     ->sortable()
                     ->searchable(),
+
+                TextColumn::make('classroom_info')
+                    ->label('班級座號')
+                    ->state(fn (MealCancelRequest $record) => match ($record->cancellable_type) {
+                        \App\Models\Student::class => $record->cancellable->class_full_name.' ('.$record->cancellable->seat_number.'號)',
+                        default => '-',
+                    })
+                    ->badge()
+                    ->color('gray'),
 
                 TextColumn::make('cancellable_type')
                     ->label('類型')
@@ -113,7 +124,21 @@ class MealCancelRequestsTable
                 DeleteAction::make(),
             ])
             ->bulkActions([
-                //
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultGroup(
+                \Filament\Tables\Grouping\Group::make('classroom.sort_order')
+                    ->label('班級')
+                    ->getTitleFromRecordUsing(fn ($record) => $record->classroom?->full_name ?? '未分班')
+            )
+            ->groups([
+                \Filament\Tables\Grouping\Group::make('classroom.sort_order')
+                    ->label('班級')
+                    ->getTitleFromRecordUsing(fn ($record) => $record->classroom?->full_name ?? '未分班'),
+                'start_date',
+                'cancellable_type',
             ]);
     }
 }

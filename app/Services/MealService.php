@@ -150,6 +150,14 @@ class MealService
                 continue;
             }
 
+            // 嘗試解析班級 ID (僅針對學生)
+            $classroomId = null;
+            if ($type === \App\Models\Student::class) {
+                // 如果已有載入關聯可直接用，否則查 DB
+                $student = $type::find($id);
+                $classroomId = $student?->classroom_id;
+            }
+
             MealCancelRequest::create([
                 'cancellable_id' => $id,
                 'cancellable_type' => $type,
@@ -157,6 +165,7 @@ class MealService
                 'end_date' => $end->toDateString(),
                 'leave_type' => $leaveTypeValue,
                 'scope_type' => $scopeType,
+                'classroom_id' => $classroomId, // [新增] 寫入班級 ID
                 'reason' => $reason,
                 'status' => $status,
                 'approved_at' => $approvedAt,
@@ -200,11 +209,15 @@ class MealService
         // 執行業務規則驗證（公假規則 & 班級活動範圍）
         $this->validateCancellationRules($semester, $startDate, $endDate, CancelLeaveType::Administrative, 'class_activity');
 
-        // 取得該班所有學生
-        $students = $classroom->students()->active()->get();
+        // 取得該班所有「在學」且「有搭伙」的學生
+        // [宗師指點] 沒搭伙的學生本來就沒飯吃，不需要停餐，故需過濾 is_meal_user
+        $students = $classroom->students()
+            ->active()
+            ->where('is_meal_user', true)
+            ->get();
 
         if ($students->isEmpty()) {
-            throw new \Exception('該班級沒有啟用中的學生');
+            throw new \Exception('該班級目前沒有「在學且有搭伙」的學生，無需建立停餐申請');
         }
 
         // 決定初始狀態 (考慮自動核准模式)
@@ -233,7 +246,7 @@ class MealService
                 'scope_type' => 'class_activity',
                 'classroom_id' => $classroom->id,
                 'requested_by' => $requestedBy->id,
-                'reason' => $reason ?? "班級活動停餐（{$classroom->class_full_name}）",
+                'reason' => $reason ?? "班級活動停餐（{$classroom->full_name}）",
                 'status' => $status,
                 'approved_at' => $approvedAt,
                 'origin' => 'liff',
@@ -297,6 +310,10 @@ class MealService
                 continue;
             }
 
+            // 解析該學生的班級 ID
+            $student = \App\Models\Student::find($studentId);
+            $classroomId = $student?->classroom_id;
+
             MealCancelRequest::create([
                 'cancellable_id' => $studentId,
                 'cancellable_type' => \App\Models\Student::class,
@@ -304,7 +321,7 @@ class MealService
                 'end_date' => $end->toDateString(),
                 'leave_type' => CancelLeaveType::Administrative->value,
                 'scope_type' => 'group',
-                'classroom_id' => null,
+                'classroom_id' => $classroomId, // [新增] 寫入班級 ID
                 'requested_by' => $requestedBy->id,
                 'reason' => $reason ?? '跨班團體停餐',
                 'status' => $status,
@@ -328,5 +345,56 @@ class MealService
     {
         // 暫時僅回傳 true，待後續 User/Student 關聯整合後實作
         return true;
+    }
+
+    /**
+     * 從校園食材登錄平台獲取菜單 (新實作：對接隱藏 API)
+     *
+     * @param  string  $schoolCode  6位數學校代碼 (MOE Code)
+     * @param  string  $date  日期 (YYYY-MM-DD)
+     * @return array|null 菜單資料陣列
+     */
+    public function getMenuFromFatrace(string $schoolCode, string $date): ?array
+    {
+        // 1. 取得 BatchDataId
+        // API 參數 SchoolId 需移除首位 0 (例如 064616 -> 64616)
+        $rawSchoolId = ltrim($schoolCode, '0');
+
+        try {
+            $metadataResponse = \Illuminate\Support\Facades\Http::get('https://fatraceschool.k12ea.gov.tw/offered/meal', [
+                'SchoolId' => $rawSchoolId,
+                'period' => $date,
+                'KitchenId' => 'all',
+                'MenuType' => 1,
+            ]);
+
+            if (! $metadataResponse->successful() || empty($metadataResponse->json('data'))) {
+                return null;
+            }
+
+            $batchDataId = $metadataResponse->json('data.0.BatchDataId');
+            $calorie = $metadataResponse->json('data.0.Calorie');
+
+            // 2. 取得菜色列表
+            $dishResponse = \Illuminate\Support\Facades\Http::get('https://fatraceschool.k12ea.gov.tw/dish', [
+                'BatchDataId' => $batchDataId,
+            ]);
+
+            if (! $dishResponse->successful()) {
+                return null;
+            }
+
+            return [
+                'school_name' => $metadataResponse->json('data.0.SchoolName'),
+                'date' => $date,
+                'calorie' => $calorie,
+                'dishes' => $dishResponse->json('data'),
+                'source_url' => "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school={$schoolCode}&period={$date}",
+            ];
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Fatrace API Error: '.$e->getMessage());
+
+            return null;
+        }
     }
 }

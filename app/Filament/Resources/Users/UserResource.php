@@ -22,6 +22,10 @@ class UserResource extends Resource
 
     protected static ?string $navigationLabel = '系統帳號管理';
 
+    protected static ?string $modelLabel = '使用者';
+
+    protected static ?string $pluralModelLabel = '使用者';
+
     protected static string|\UnitEnum|null $navigationGroup = '系統管理';
 
     protected static ?int $navigationSort = 1;

@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use LINE\Clients\MessagingApi\Model\ReplyMessageRequest;
-use LINE\Clients\MessagingApi\Model\TextMessage;
 use LINE\Constants\HTTPHeader;
 use LINE\Parser\EventRequestParser;
 use LINE\Webhook\Model\MessageEvent;
@@ -63,7 +62,8 @@ class LineBotController extends Controller
 
             $userMessage = $messageContent->getText();
             $replyToken = $event->getReplyToken();
-            $lineUserId = $event->getSource()?->getUserId();
+            $source = $event->getSource();
+            $lineUserId = ($source instanceof \LINE\Webhook\Model\UserSource) ? $source->getUserId() : null;
 
             // ==========================================
             // 🔐 宗師邏輯區：建立 LINE 身分連結
@@ -90,7 +90,9 @@ class LineBotController extends Controller
                 }
             } else {
                 // 2. 👑 關鍵：讓 Laravel 記得這個人 (手動登入)
-                auth()->login($user);
+                /** @var \Illuminate\Contracts\Auth\StatefulGuard $guard */
+                $guard = auth();
+                $guard->login($user);
             }
 
             // ==========================================
@@ -111,9 +113,67 @@ class LineBotController extends Controller
                 Log::error($e->getTraceAsString()); // 記錄詳細錯誤位置
                 $replyText = '小秘發生錯誤：'.$e->getMessage(); // 把錯誤直接回傳到 LINE (開發階段用)
             }
-            // 6. 回覆訊息
+            // 6. 回覆訊息 (包含 Quick Replies)
             try {
-                $message = new TextMessage(['type' => 'text', 'text' => $replyText]);
+                // 定義 Quick Reply 按鈕
+                $quickReply = new \LINE\Clients\MessagingApi\Model\QuickReply([
+                    'items' => [
+                        new \LINE\Clients\MessagingApi\Model\QuickReplyItem([
+                            'type' => 'action',
+                            'action' => new \LINE\Clients\MessagingApi\Model\MessageAction([
+                                'label' => '🍱 查菜單',
+                                'text' => '今天吃什麼？',
+                            ]),
+                        ]),
+                        new \LINE\Clients\MessagingApi\Model\QuickReplyItem([
+                            'type' => 'action',
+                            'action' => new \LINE\Clients\MessagingApi\Model\MessageAction([
+                                'label' => '📋 查停餐名單', // 最多 20 字
+                                'text' => '查詢今日停餐名單',
+                            ]),
+                        ]),
+                        new \LINE\Clients\MessagingApi\Model\QuickReplyItem([
+                            'type' => 'action',
+                            'action' => new \LINE\Clients\MessagingApi\Model\MessageAction([
+                                'label' => '👮 查學生', // 簡短標籤
+                                'text' => '查詢學生資料', // 引導 AI 詢問姓名
+                            ]),
+                        ]),
+                        new \LINE\Clients\MessagingApi\Model\QuickReplyItem([
+                            'type' => 'action',
+                            'action' => new \LINE\Clients\MessagingApi\Model\MessageAction([
+                                'label' => '⭐ 寫評價',
+                                'text' => '我要對今天的午餐評分',
+                            ]),
+                        ]),
+                        new \LINE\Clients\MessagingApi\Model\QuickReplyItem([
+                            'type' => 'action',
+                            'action' => new \LINE\Clients\MessagingApi\Model\MessageAction([
+                                'label' => '🗓️ 查放假',
+                                'text' => '明天有放假嗎？',
+                            ]),
+                        ]),
+                    ],
+                ]);
+
+                if (str_starts_with($replyText, 'FLEX:')) {
+                    $json = substr($replyText, 5);
+                    $data = json_decode($json, true);
+
+                    $message = \LINE\Clients\MessagingApi\Model\Message::fromAssocArray([
+                        'type' => 'flex',
+                        'altText' => '您有一則菜單訊息',
+                        'contents' => $data,
+                        'quickReply' => $quickReply, // Flex 也可以掛 Quick Reply
+                    ]);
+                } else {
+                    $message = new \LINE\Clients\MessagingApi\Model\TextMessage([
+                        'type' => 'text',
+                        'text' => $replyText,
+                        'quickReply' => $quickReply, // 一般文字掛 Quick Reply
+                    ]);
+                }
+
                 $request = new ReplyMessageRequest([
                     'replyToken' => $replyToken,
                     'messages' => [$message],
@@ -133,7 +193,7 @@ class LineBotController extends Controller
     {
         try {
             $message = new \LINE\Clients\MessagingApi\Model\TextMessage(['type' => 'text', 'text' => $text]);
-            $request = new \LINE\Clients\MessagingApi\Model\ReplyMessageRequest([
+            $request = new ReplyMessageRequest([
                 'replyToken' => $replyToken,
                 'messages' => [$message],
             ]);

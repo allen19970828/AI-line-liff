@@ -155,6 +155,7 @@ class StudentService
                     '5' => 5,
                     '六' => 6,
                     '6' => 6,
+                    '7' => 7,
                 ];
                 $val = $gradeMap[$matches[1]] ?? 1;
                 $grade = GradeLevel::tryFrom($val) ?? GradeLevel::GRADE_1;
@@ -178,5 +179,20 @@ class StudentService
                 'is_active' => true,
             ]
         );
+    }
+
+    /**
+     * 搜尋學生 (MCP Tool 用)
+     */
+    public function searchStudents(int $schoolId, string $query): Collection
+    {
+        return Student::where('school_id', $schoolId)
+            ->where('name', 'like', "%{$query}%")
+            ->with([
+                'classroom' => function ($q) {
+                    $q->select('id', 'class_name', 'grade', 'stage');
+                },
+            ])
+            ->get();
     }
 }

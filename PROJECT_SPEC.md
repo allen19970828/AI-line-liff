@@ -18,6 +18,8 @@
     - **Authentication Log**: 使用者登入/登出紀錄。
     - **Laravel Log**: 系統日誌查看器（storage/logs）。
 - **AI 整合**: Laravel AI, Prism (Echolabs), MCP (Model Context Protocol)
+    - **主要引擎**: Google Gemini 2.5 Flash Lite (提供極低延遲與高精準工具調用)。
+    - **開發備援**: Groq (Llama 3.3), Ollama (地端 TAIDE/Qwen)。
 - **LINE 整合**: LINE Bot SDK, Socialite (LINE Provider), LIFF
 - **工具與品質**: Laravel Pail, Laravel Pint, Pest (測試)
 
@@ -44,7 +46,24 @@
 - **行事曆管理**: 處理補課、放假、活動不供餐等例外日期。
 - **水果日計畫**: 支援設定特定星期為水果日。
 
-### 3.3 AI 與 MCP 整合
+### 3.4 AI 智能代理 (LunchAgent)
+
+系統搭載了基於 MCP 協議的 `LunchAgent`，能理解自然語言並操作以下工具：
+
+- **停餐管理 (`cancel_meal`)**: 自動根據身分（老師/家長）處理個人、班級或團體申請。
+- **查詢停餐 (`list_cancellations`)**: 即時產出格式化的停餐名單。
+- **查詢學生 (`get_student_info`)**: 對接 `StudentService` 查詢學生在學狀態與午餐訂閱情況。
+- **查詢菜單 (`get_daily_menu`)**: 透過 `MealService` 實時對接「校園食材登錄平台」獲取真實菜色。
+
+### 3.5 外部 API 整合
+
+- **校園食材登錄平台 (FatRaceSchool)**:
+    - 透過隱藏 API 獲取全台學校的每日配餐資料。
+    - 詳細規格請參閱 [FATRACE_API_SPEC.md](./FATRACE_API_SPEC.md)。
+- **行事曆管理**: 處理補課、放假、活動不供餐等例外日期。
+- **水果日計畫**: 支援設定特定星期為水果日。
+
+### 3.6 AI 與 MCP 整合
 
 - **AI 助手**: 整合 Prism 提供智慧化的數據分析與決策支援。
 - **MCP 伺服器**: 透過 `Laravel\Mcp` 暴露專屬工具與資源，讓 AI 代理（如 Antigravity）能更深層地理解並操作系統業務邏輯。

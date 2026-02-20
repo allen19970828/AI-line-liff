@@ -10,6 +10,7 @@
         "bezhansalleh/filament-shield": "^4.1",
         "echolabsdev/prism": "^0.99.19",
         "filament/filament": "^4.0",
+        "guava/calendar": "^2.1",
         "jeffgreco13/filament-breezy": "^3.1",
         "lara-zeus/qr": "^2.0",
         "laravel/ai": "^0.1.5",

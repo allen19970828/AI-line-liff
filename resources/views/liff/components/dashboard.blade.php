@@ -16,12 +16,12 @@
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
             </div>
-            <h3 class="font-bold text-gray-800">滿意度調查</h3>
-            <p class="text-xs text-gray-400 mt-1">累積點數回饋</p>
+            <h3 class="font-bold text-gray-800">問卷調查</h3>
+            <p class="text-xs text-gray-400 mt-1">每月午餐滿意度調查</p>
         </div>
 
         <!-- QR Check-in Card -->
-        <div @click="scanQrCode()"
+        <div @click="scanQrCode()" x-show="settings.staffMealMode === 'daily'"
             class="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 active:scale-95 transition-transform cursor-pointer">
             <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3 text-blue-600">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -48,8 +48,9 @@
             <p class="text-xs text-gray-400 mt-1">飲食偏好設定</p>
         </div>
 
-        <!-- Meal Cancellation Card -->
-        <div @click="view = 'cancellation'; fetchCancellationTargets()"
+        <!-- Staff Cancellation Card -->
+        <div @click="view = 'cancellation'; cancellation.mainTab = 'staff'; fetchCancellationTargets()"
+            x-show="settings.staffMealMode === 'monthly'" x-cloak
             class="bg-white p-5 rounded-2xl shadow-sm border border-red-100 active:scale-95 transition-transform cursor-pointer">
             <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3 text-red-600">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -57,8 +58,21 @@
                         d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <h3 class="font-bold text-gray-800">停餐申請</h3>
-            <p class="text-xs text-gray-400 mt-1">請假/取消用餐</p>
+            <h3 class="font-bold text-gray-800">教職員停餐</h3>
+            <p class="text-xs text-gray-400 mt-1">教職員請假/取消</p>
+        </div>
+
+        <!-- Student Cancellation Card -->
+        <div @click="view = 'cancellation'; cancellation.mainTab = 'student'; fetchCancellationTargets()"
+            class="bg-white p-5 rounded-2xl shadow-sm border border-emerald-100 active:scale-95 transition-transform cursor-pointer">
+            <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mb-3 text-emerald-600">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </div>
+            <h3 class="font-bold text-gray-800">學生停餐</h3>
+            <p class="text-xs text-gray-400 mt-1">代學生申請停餐</p>
         </div>
 
         <!-- Meal Complaint Card -->
@@ -72,6 +86,19 @@
             </div>
             <h3 class="font-bold text-gray-800">問題回報</h3>
             <p class="text-xs text-gray-400 mt-1">食安反映/意見單</p>
+        </div>
+
+        <!-- Settlement Card -->
+        <div @click="view = 'settlement'; fetchSettlement()"
+            class="bg-white p-5 rounded-2xl shadow-sm border border-purple-100 active:scale-95 transition-transform cursor-pointer">
+            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mb-3 text-purple-600">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="font-bold text-gray-800">月結與明細</h3>
+            <p class="text-xs text-gray-400 mt-1">用餐統計與帳務</p>
         </div>
     </div>
 </div>

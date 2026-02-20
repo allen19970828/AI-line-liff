@@ -16,6 +16,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use LaraZeus\Qr\Facades\Qr;
 
 class SchoolsTable
 {
@@ -40,7 +41,7 @@ class SchoolsTable
                 TextColumn::make('name')
                     ->label('學校名稱')
                     ->description(
-                        fn(Model $record): string => $record->tax_id ? "統編: {$record->tax_id}" : ''
+                        fn (Model $record): string => $record->tax_id ? "統編: {$record->tax_id}" : ''
                     )
                     ->searchable(['name', 'tax_id']) // 讓這裡也能搜到統編
                     ->wrap(), // 允許換行，避免長名稱撐爆表格
@@ -49,7 +50,7 @@ class SchoolsTable
                 // 宗師指點：縣市與行政區分開佔兩欄太浪費，合體為一欄。
                 TextColumn::make('city')
                     ->label('地區')
-                    ->formatStateUsing(fn(Model $record) => "{$record->city} {$record->district}")
+                    ->formatStateUsing(fn (Model $record) => "{$record->city} {$record->district}")
                     ->badge() // 用徽章樣式，視覺上更整齊
                     ->color('gray')
                     ->sortable(),
@@ -65,8 +66,8 @@ class SchoolsTable
                 TextColumn::make('website')
                     ->label('官網')
                     ->icon('heroicon-m-globe-alt')
-                    ->url(fn($state) => $state, shouldOpenInNewTab: true) // 點擊直接開新視窗
-                    ->formatStateUsing(fn() => '前往網站') // 不顯示冗長的 URL，只顯示文字
+                    ->url(fn ($state) => $state, shouldOpenInNewTab: true) // 點擊直接開新視窗
+                    ->formatStateUsing(fn () => '前往網站') // 不顯示冗長的 URL，只顯示文字
                     ->color('info')
                     ->toggleable(isToggledHiddenByDefault: true), // 預設隱藏，保持介面清爽
 
@@ -104,7 +105,7 @@ class SchoolsTable
                 // 地區過濾器 (進階)
                 SelectFilter::make('city')
                     ->label('縣市')
-                    ->options(fn() => \App\Models\School::distinct()->pluck('city', 'city')->filter()->toArray())
+                    ->options(fn () => \App\Models\School::distinct()->pluck('city', 'city')->filter()->toArray())
                     ->searchable(),
             ])
 
@@ -115,7 +116,31 @@ class SchoolsTable
                     ->label('異動紀錄')
                     ->icon('heroicon-m-clock')
                     ->color('info')
-                    ->url(fn($record) => \App\Filament\Resources\Schools\SchoolResource::getUrl('activities', ['record' => $record])),
+                    ->url(fn ($record) => \App\Filament\Resources\Schools\SchoolResource::getUrl('activities', ['record' => $record])),
+                \Filament\Actions\Action::make('stationary_qr')
+                    ->label('定點報到 QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('success')
+                    ->modalHeading(fn ($record) => "{$record->name} - 定點報到 QR Code")
+                    ->modalDescription('請將此 QR Code 列印並張貼於各校供教職員掃描。')
+                    ->modalContent(function ($record) {
+                        $liffId = config('services.line.liff_id');
+                        $url = "https://liff.line.me/{$liffId}?action=checkin&code={$record->checkin_code}";
+
+                        return new \Illuminate\Support\HtmlString('
+                            <div class="flex flex-col items-center justify-center p-4">
+                                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                    '.Qr::output(data: $url, options: ['size' => '250', 'margin' => '1', 'type' => 'svg']).'
+                                </div>
+                                <div class="mt-4 text-center">
+                                    <p class="text-sm text-gray-500 mb-2">掃描此碼將自動開啟 LINE 進行報到</p>
+                                    <code class="text-xs bg-gray-100 px-2 py-1 rounded">'.$url.'</code>
+                                </div>
+                            </div>
+                        ');
+                    })
+                    ->modalSubmitAction(false) // 不需要提交，純展示
+                    ->modalCancelActionLabel('關閉'),
                 EditAction::make()
                     ->iconButton(), // 用小按鈕，省空間
                 DeleteAction::make()
@@ -148,7 +173,7 @@ class SchoolsTable
                         ])
                         ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data): void {
                             // 宗師心法：使用 each 逐一更新，觸發 model event (若有)
-                            $records->each(fn($record) => $record->update(['is_active' => $data['is_active']]));
+                            $records->each(fn ($record) => $record->update(['is_active' => $data['is_active']]));
 
                             // 通知
                             \Filament\Notifications\Notification::make()

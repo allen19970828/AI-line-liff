@@ -52,6 +52,21 @@ class Staff extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * [宗師新增] 透過 User 關聯到 LINE 帳號
+     */
+    public function lineAccount(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            LineAccount::class,
+            User::class,
+            'id',           // users.id
+            'user_id',      // line_accounts.user_id
+            'user_id',      // staff.user_id
+            'id'            // users.id
+        );
+    }
+
     // 宗師指點：移除重複的 school() 關聯，BelongsToSchool Trait 已包含
 
     /**

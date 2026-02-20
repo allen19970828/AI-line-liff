@@ -73,7 +73,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public function canBypassSchoolScope(): bool
     {
         // 方案一：如果你有 email 是特定值的上帝
-        if ($this->email === 'admin@example.com') {
+        if (in_array($this->email, ['admin@example.com', 'admin@deepmatrix.com'])) {
             return true;
         }
 

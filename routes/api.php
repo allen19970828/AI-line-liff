@@ -21,6 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Meal Cancellation (LIFF)
     Route::get('/cancellation/targets', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'getTargets']);
+    Route::get('/cancellation/holidays', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'getHolidays']);
     Route::post('/cancellation/search-student', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'searchStudent']);
     Route::post('/meal-cancellation', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'store']);
     Route::post('/meal-cancellation/class-activity', [\App\Http\Controllers\Api\Liff\MealCancellationController::class, 'storeClassActivity']);
@@ -44,4 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Meal Complaints (LIFF)
     Route::get('/meal-complaints', [\App\Http\Controllers\Api\Liff\MealComplaintController::class, 'index']);
     Route::post('/meal-complaints', [\App\Http\Controllers\Api\Liff\MealComplaintController::class, 'store']);
+
+    // Check-in (Stationary QR)
+    Route::post('/check-in', [\App\Http\Controllers\Api\Liff\CheckInController::class, 'store']);
+
+    // Settlement (LIFF)
+    Route::get('/settlement/current', [\App\Http\Controllers\Api\Liff\SettlementController::class, 'getCurrent']);
 });

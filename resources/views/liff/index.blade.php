@@ -163,9 +163,15 @@
                 // Axios Config - Apply to global axios
                 axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
                 axios.defaults.headers.common['Accept'] = 'application/json';
-                axios.defaults.headers.common['ngrok-skip-browser-warning'] = '69420';
 
                 const user = data.user;
+                // Dispatch event for Alpine
+                window.dispatchEvent(new CustomEvent('auth-success', {
+                    detail: {
+                        staffMealMode: data.staff_meal_mode || 'monthly'
+                    }
+                }));
+
                 document.getElementById('login-card').classList.add('hidden');
                 document.getElementById('global-loading').classList.add('hidden');
 
@@ -178,6 +184,21 @@
                     const uSchool = document.getElementById('u-school');
                     if (data.school_name && uSchool) {
                         uSchool.innerText = data.school_name;
+                    }
+
+                    // [新增] 定點報到自動處理
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('action') === 'checkin' && urlParams.get('code')) {
+                        try {
+                            const checkInCode = urlParams.get('code');
+                            const { data: ciRes } = await axios.post('/api/check-in', { code: checkInCode });
+                            alert(`【報到成功】\n單位：${ciRes.school_name}\n時間：${ciRes.checked_at}`);
+
+                            // 清除 URL 參數避免過期點擊
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        } catch (ciErr) {
+                            alert(ciErr.response?.data?.message || '報到失敗');
+                        }
                     }
                 }
 
@@ -231,7 +252,7 @@
                 liffId: window.liffId,
                 view: 'dashboard',
                 surveys: { pending: [], history: [] },
-                settings: { dietary_type: 'meat', is_meal_user: true },
+                settings: { dietary_type: 'meat', is_meal_user: true, staffMealMode: 'monthly' },
                 cancellation: {
                     mainTab: 'staff',
                     studentTab: 'personal',
@@ -246,6 +267,8 @@
                     targets: [],
                     search: { classroom_id: '', seat_number: '' },
                     foundStudent: null,
+                    searchResults: [],
+                    result: null, // [新增] 存放申請結果
                     selectedClassroom: '',
                     selectedStudents: [],
                     studentSearchKeyword: '',
@@ -270,6 +293,7 @@
                     endDate: '',
                     leaveType: 'personal',
                     reason: '',
+                    holidays: {}, // [新增] 假日清單 { '2024-04-04': '兒童節' }
                 },
 
                 complaints: {
@@ -288,10 +312,72 @@
                     }
                 },
 
+                settlement: {
+                    yearMonth: (function () {
+                        const d = new Date();
+                        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                    })(),
+                    daysCount: 0,
+                    amount: 0,
+                    dates: [],
+                    isLoading: false
+                },
+
                 async init() {
+                    // [新增] 監聽登入成功事件，更新設定
+                    window.addEventListener('auth-success', (e) => {
+                        this.settings.staffMealMode = e.detail.staffMealMode;
+                    });
+
                     if (this.liffId) {
                         await this.fetchSurveys();
                         await this.fetchCancellationTargets();
+                        await this.fetchHolidays();
+                        await this.fetchSettlement();
+                    }
+
+                    // [新增] 監聽日期變更
+                    this.$watch('cancellation.startDate', (val) => this.validateDate(val, 'start'));
+                    this.$watch('cancellation.endDate', (val) => this.validateDate(val, 'end'));
+                },
+
+                // [新增] 抓取假日
+                async fetchHolidays() {
+                    try {
+                        const { data } = await axios.get('/api/cancellation/holidays');
+                        this.cancellation.holidays = data.holidays || {};
+
+                        // [新增] 初始化驗證：檢查預設日期是否為假日
+                        if (this.cancellation.startDate) {
+                            this.validateDate(this.cancellation.startDate, 'start', true);
+                        }
+                    } catch (error) {
+                        console.error('Fetch holidays error:', error);
+                    }
+                },
+
+                // [新增] 取得假日顯示文字 (用於 UI 提示)
+                getHolidayHint(dateStr) {
+                    if (!dateStr || !this.cancellation.holidays) return null;
+                    return this.cancellation.holidays[dateStr] || null;
+                },
+
+                // [新增] 日期驗證邏輯
+                validateDate(dateStr, field, isInitial = false) {
+                    if (!dateStr) return;
+
+                    const holidayName = this.cancellation.holidays[dateStr];
+                    if (holidayName) {
+                        if (!isInitial) {
+                            alert(`【提醒】${dateStr} 是 ${holidayName}，無須停餐！`);
+                        }
+
+                        // 重置日期 (使用 $nextTick 確保在手機端原生 Picker 關閉後執行)
+                        this.$nextTick(() => {
+                            if (field === 'start') this.cancellation.startDate = '';
+                            if (field === 'end') this.cancellation.endDate = '';
+                        });
+                        return;
                     }
                 },
 
@@ -394,6 +480,14 @@
                 async submitCancellation() {
                     if (!confirm('確定要送出停餐申請嗎？')) return;
 
+                    // [新增] 二次確認日期
+                    if (this.cancellation.holidays[this.cancellation.startDate]) {
+                        return alert(`起始日為放假日，無法申請`);
+                    }
+                    if (this.cancellation.endDate && this.cancellation.holidays[this.cancellation.endDate]) {
+                        return alert(`結束日為放假日，無法申請`);
+                    }
+
                     try {
                         let targetId;
                         let type;
@@ -417,8 +511,19 @@
                             reason: this.cancellation.reason
                         });
 
-                        alert('停餐申請成功！\\n' + (data.message || '已送出申請'));
-                        this.view = 'dashboard';
+                        const count = data.count || 0;
+                        const affected = data.affected_students || [];
+
+                        this.cancellation.result = {
+                            title: count > 0 ? '停餐申請成功！' : '停餐已確認！',
+                            message: count > 0
+                                ? `已為 ${count} 位學生建立申請。`
+                                : `所選學生均已有停餐紀錄，毋需重複建立。`,
+                            students: affected,
+                            isGrouped: false
+                        };
+                        this.view = 'resultSummary';
+                        window.scrollTo(0, 0);
 
                         this.cancellation.reason = '';
                         this.cancellation.foundStudent = null;
@@ -445,8 +550,20 @@
                             reason: this.cancellation.reason || '班級活動'
                         });
 
-                        alert(`班級活動停餐申請成功！\\n已建立 ${data.count || 0} 筆申請`);
-                        this.view = 'dashboard';
+                        const count = data.count || 0;
+                        const affected = data.affected_students || [];
+
+                        // 設定結果資料並切換視圖
+                        this.cancellation.result = {
+                            title: count > 0 ? '班級活動停餐申請成功' : '班級活動停餐已確認',
+                            message: count > 0
+                                ? `已為 ${count} 位學生建立申請。`
+                                : `所有搭伙學生均已有停餐紀錄，毋需重複建立。`,
+                            students: affected,
+                            isGrouped: false // 班級活動通常單一班級，不需要再分組顯示
+                        };
+                        this.view = 'resultSummary';
+                        window.scrollTo(0, 0);
 
                         this.cancellation.selectedClassroom = '';
                         this.cancellation.reason = '';
@@ -511,8 +628,27 @@
                             reason: this.cancellation.reason || '團體活動'
                         });
 
-                        alert(`跨班團體停餐申請成功！\\n已建立 ${data.count || 0} 筆申請`);
-                        this.view = 'dashboard';
+                        const count = data.count || 0;
+                        const affected = data.affected_students || [];
+
+                        // 整理分組資料 (GroupBy Class Name)
+                        const grouped = affected.reduce((acc, student) => {
+                            const className = student.class_name || '未分班';
+                            if (!acc[className]) acc[className] = [];
+                            acc[className].push(student);
+                            return acc;
+                        }, {});
+
+                        this.cancellation.result = {
+                            title: count > 0 ? '跨班團體停餐申請成功' : '團體停餐已確認',
+                            message: count > 0
+                                ? `已為 ${count} 位學生建立申請。`
+                                : `所選學生均已有停餐紀錄，毋需重複建立。`,
+                            students: grouped,
+                            isGrouped: true
+                        };
+                        this.view = 'resultSummary';
+                        window.scrollTo(0, 0);
 
                         this.cancellation.selectedStudents = [];
                         this.cancellation.reason = '';
@@ -763,7 +899,7 @@
                 },
 
                 async resign() {
-                    if (confirm('確定要從目前學校離職嗎？\\n此動作將使您的帳號狀態變為「離職」，且無法再查看學校資訊。')) {
+                    if (confirm('確定要從目前學校離職嗎？\n此動作將使您的帳號狀態變為「離職」，且無法再查看學校資訊。')) {
                         try {
                             await axios.post('/api/unbind');
                             alert('已離職並解除綁定');
@@ -771,6 +907,22 @@
                         } catch (e) {
                             alert('操作失敗');
                         }
+                    }
+                },
+
+                async fetchSettlement() {
+                    this.settlement.isLoading = true;
+                    try {
+                        const { data } = await axios.get('/api/settlement/current', {
+                            params: { year_month: this.settlement.yearMonth }
+                        });
+                        this.settlement.daysCount = data.days_count || 0;
+                        this.settlement.amount = data.amount || 0;
+                        this.settlement.dates = data.dates || [];
+                    } catch (e) {
+                        console.error('Fetch settlement failed', e);
+                    } finally {
+                        this.settlement.isLoading = false;
                     }
                 }
             }
@@ -847,6 +999,9 @@
 
         <!-- Meal Complaints View -->
         @include('liff.components.complaints')
+
+        <!-- Settlement View -->
+        @include('liff.components.settlement')
 
     </main>
 
@@ -1096,6 +1251,41 @@
                     :disabled="!cancellation.groupForm.name || cancellation.groupForm.students.length === 0"
                     class="flex-1 py-3 rounded-xl bg-purple-600 text-white font-bold shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all">
                     儲存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Summary View -->
+    <div x-show="view === 'resultSummary'" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div
+            class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
+            <!-- Header -->
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-800" x-text="cancellation.result.title"></h3>
+                <button @click="view = 'dashboard'; cancellation.result = null"
+                    class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-5">
+                <p class="text-gray-600 mb-4" x-text="cancellation.result.message"></p>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="p-4 border-t border-gray-100 bg-gray-50">
+                <button @click="view = 'dashboard'; cancellation.result = null"
+                    class="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium active:scale-95 transition-transform hover:bg-gray-200">
+                    返回首頁
                 </button>
             </div>
         </div>

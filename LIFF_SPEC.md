@@ -12,6 +12,7 @@
 - `surveys.blade.php`: 問卷調查系統（支援 Pending/History 狀態）。
 - `cancellation.blade.php`: 停餐申請系統（教職員/學生/團體）。
 - `complaints.blade.php`: 午餐狀況回報（支援拍照上傳與歷史清單）。
+- `settlement.blade.php`: 個人用餐明細與結算狀態（當月餐數統計）。
 - `settings.blade.php`: 個人化設定。
 
 ### 1.2 載入策略 (Loading Strategy)
@@ -19,9 +20,9 @@
 - **順序執行優先**：邏輯採用內嵌 JavaScript (Inline Script)，確保在「SDK 初始化」→「資料獲取」→「Alpine 啟動」之間具有明確的執行順序。
 - **混合環境相容**：不依賴 Vite 動態模組，以解決在 ngrok 或特殊 Webview 環境下的混合內容 (Mixed Content) 限制。
 - **外部資源**:
-  - `LINE SDK`: `https://static.line-scdn.net/liff/edge/2/sdk.js`
-  - `Axios`: `https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js`
-  - `Alpine.js`: `https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js` (使用 `defer` 載入)
+    - `LINE SDK`: `https://static.line-scdn.net/liff/edge/2/sdk.js`
+    - `Axios`: `https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js`
+    - `Alpine.js`: `https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js` (使用 `defer` 載入)
 
 ---
 
@@ -40,6 +41,12 @@
     surveys: { ... },         // 問卷清單數據
     cancellation: { ... },    // 停餐申請狀態機
     complaints: { ... },      // 回報單數據錄
+    settlement: {             // 教職員個人結算數據
+        yearMonth: '',
+        daysCount: 0,
+        amount: 0,
+        dates: []             // 具體用餐日期清單
+    }
 }
 ```
 

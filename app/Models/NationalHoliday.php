@@ -55,7 +55,8 @@ class NationalHoliday extends Model
             if ($holiday->date) {
                 // 這裡看你想存西元(2026)還是民國(115)
                 // 建議存西元，與資料庫標準一致，顯示時再轉民國
-                $holiday->year = (int) $holiday->date->format('Y');
+                $date = Carbon::parse($holiday->date);
+                $holiday->year = (int) $date->format('Y');
 
                 // 若要存民國年，改為：
                 // $holiday->year = $holiday->date->year - 1911;
