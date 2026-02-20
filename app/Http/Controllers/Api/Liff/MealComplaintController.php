@@ -85,17 +85,17 @@ class MealComplaintController extends Controller
 
             $complaint = MealComplaint::create([
                 'school_id' => $staff->school_id,
-                'classroom_id' => $request->classroom_id,
+                'classroom_id' => $request->input('classroom_id'),
                 'staff_id' => $staff->id,
-                'occurred_at' => $request->occurred_at,
-                'content' => $request->content,
+                'occurred_at' => $request->input('occurred_at'),
+                'content' => $request->input('content'),
                 'photo_path' => $photoPath,
                 'status' => 'pending',
             ]);
 
             // 🆕 通知午餐秘書 (寫入彙整日誌)
             $schoolName = $staff->school?->name ?? '未知學校';
-            $logMsg = "【新意見回報】\n學校：{$schoolName}\n回報者：{$staff->name}\n描述：{$request->content}\n時間：".now()->toDateTimeString();
+            $logMsg = "【新意見回報】\n學校：{$schoolName}\n回報者：{$staff->name}\n描述：{$request->input('content')}\n時間：".now()->toDateTimeString();
             \Illuminate\Support\Facades\Log::channel('daily')->info($logMsg);
 
             return response()->json([

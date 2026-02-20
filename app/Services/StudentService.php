@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Attributes\AsMcpTool;
+// use App\Attributes\AsMcpTool; // Removed as it causes IDE errors and lacks definition
 use App\DTOs\StudentImportData; // [新架構]
 use App\Enums\GradeLevel;
 use App\Enums\SemesterStage;
@@ -66,7 +66,7 @@ class StudentService
     /**
      * 批量更新身分 (MCP Tool / Filament Action 用)
      */
-    #[AsMcpTool(name: 'batch_update_identity', description: '批量更新補助身分')]
+    // #[AsMcpTool(name: 'batch_update_identity', description: '批量更新補助身分')]
     public function batchUpdateIdentity(Collection $students, StudentIdentity $identity, ?string $reason = null, ?string $date = null): void
     {
         DB::transaction(function () use ($students, $identity, $reason, $date) {

@@ -22,7 +22,7 @@ class MealCancellationGroupController extends Controller
             ->with(['students:id,name,classroom_id,seat_number', 'students.classroom:id,name'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($group) {
+            ->map(function ($group) use ($user) {
                 return [
                     'id' => $group->id,
                     'name' => $group->name,
