@@ -111,9 +111,19 @@
 - **權限控管**: 嚴格的 RBAC，結合 Filament Shield 進行細粒度的按鈕與頁面授權。
 - **操作日誌**: 整合 Filament Activity Log 與 Authentication Log，達成「萬事皆有痕，凡走過必留下紀錄」。
 
-## 6. 未來擴展方向
+## 7. 開發環境與部署 (Development & Deployment)
 
-- **AI 自動排餐**: 根據營養指標與預算自動生成菜單。
-- **智慧庫存預測**: 結合歷史數據預測食材消耗。
-- **多語系支持**: 目前以繁體中文為主，架構上已預留本地化擴展空間。
-- **行動端進階應用**: 擴充 LIFF 功能至點名系統與家長聯絡簿。
+### 7.1 Docker 化開發 (Laravel Sail)
+
+本專案全面採用 **Laravel Sail (Docker)** 作為標準開發環境。這確保了從本地開發到 Zeabur 雲端部署的高度一致性。
+
+- **啟動環境**: `./vendor/bin/sail up -d`
+- **資料庫整合**: 內建 PostgreSQL 18、Redis 與 Mailpit (郵件調試)。
+- **前端編譯**: `sail npm run dev` 或 `sail npm run build`。
+- **資料庫遷移**: `sail artisan migrate --seed`。
+
+### 7.2 部署指引 (Zeabur)
+
+- **自動化部署**: 系統整合 GitHub Action 與 Zeabur，推送至 `main` 分支即觸發自動建置。
+- **環境變數**: 部署後需在 Zeabur 後台配置 `APP_KEY`、`LINE_CHANNEL_ID` 等必要密鑰。
+- **靜態資源**: 部署流程會自動執行編譯，免手動上傳 `public/build`。
