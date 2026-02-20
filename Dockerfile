@@ -36,8 +36,9 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Configure Nginx
-RUN mkdir -p /etc/nginx/http.d && \
+# 【宗師修正 1 & 2】：建立 Nginx 執行目錄，並將 Nginx 陣營強制轉為 www-data
+RUN mkdir -p /etc/nginx/http.d /run/nginx && \
+    sed -i 's/user nginx;/user www-data;/g' /etc/nginx/nginx.conf && \
     cat <<'EOF' > /etc/nginx/http.d/default.conf
 server {
     listen 8080;
@@ -124,8 +125,7 @@ RUN if [ -f package.json ]; then npm install; fi
 # Build frontend assets
 RUN if [ -f package.json ] && grep -q "\"build\"" package.json; then npm run build; fi
 
-# Run Laravel optimization
-RUN if [ -f artisan ]; then php artisan optimize; fi
+# 【宗師修正 3】：拔除這裡的 php artisan optimize，避免快取到空的環境變數！
 
 EXPOSE 8080
 
