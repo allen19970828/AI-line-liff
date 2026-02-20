@@ -12,7 +12,8 @@ class MealService
 {
     public function __construct(
         protected SemesterService $semesterService
-    ) {}
+    ) {
+    }
 
     /**
      * 驗證停餐申請是否符合學期規則
@@ -104,10 +105,10 @@ class MealService
         $end = Carbon::parse($endDate);
 
         // 自動查詢學期（若未提供）
-        if (! $semester) {
+        if (!$semester) {
             // 從第一個對象取得學校 ID
             $firstTarget = $type::find($ids[0]);
-            if (! $firstTarget) {
+            if (!$firstTarget) {
                 throw new \Exception('找不到申請對象');
             }
             $schoolId = $firstTarget->school_id;
@@ -115,12 +116,12 @@ class MealService
             // 優先以「申請日期」尋找對應學期
             $semester = $this->semesterService->getSemesterByDate($startDate, $schoolId);
 
-            if (! $semester) {
+            if (!$semester) {
                 // 如果申請日期還沒到學期開始，則抓「最相關」的學期作對帳預測
                 $semester = $this->semesterService->getMostRelevantSemester($schoolId);
             }
 
-            if (! $semester) {
+            if (!$semester) {
                 throw new \Exception('找不到該時段對應的啟用學期設定');
             }
         }
@@ -192,7 +193,7 @@ class MealService
         \App\Models\Classroom $classroom,
         string $startDate,
         string $endDate,
-        \App\Models\User $requestedBy,
+        User $requestedBy,
         ?string $reason = null
     ): int {
         $start = Carbon::parse($startDate);
@@ -202,7 +203,7 @@ class MealService
         $semester = $this->semesterService->getSemesterByDate($startDate, $classroom->school_id)
             ?? $this->semesterService->getMostRelevantSemester($classroom->school_id);
 
-        if (! $semester) {
+        if (!$semester) {
             throw new \Exception('找不到適用的學期設定');
         }
 
@@ -272,7 +273,7 @@ class MealService
         array $studentIds,
         string $startDate,
         string $endDate,
-        \App\Models\User $requestedBy,
+        User $requestedBy,
         ?string $reason = null
     ): int {
         $start = Carbon::parse($startDate);
@@ -286,7 +287,7 @@ class MealService
         $semester = $this->semesterService->getSemesterByDate($startDate, $schoolId)
             ?? $this->semesterService->getMostRelevantSemester($schoolId);
 
-        if (! $semester) {
+        if (!$semester) {
             throw new \Exception('找不到適用的學期設定');
         }
 
@@ -368,7 +369,7 @@ class MealService
                 'MenuType' => 1,
             ]);
 
-            if (! $metadataResponse->successful() || empty($metadataResponse->json('data'))) {
+            if (!$metadataResponse->successful() || empty($metadataResponse->json('data'))) {
                 return null;
             }
 
@@ -380,7 +381,7 @@ class MealService
                 'BatchDataId' => $batchDataId,
             ]);
 
-            if (! $dishResponse->successful()) {
+            if (!$dishResponse->successful()) {
                 return null;
             }
 
@@ -392,7 +393,7 @@ class MealService
                 'source_url' => "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school={$schoolCode}&period={$date}",
             ];
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Fatrace API Error: '.$e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Fatrace API Error: ' . $e->getMessage());
 
             return null;
         }

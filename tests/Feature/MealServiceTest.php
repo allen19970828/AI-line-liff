@@ -68,8 +68,8 @@ beforeEach(function () {
         'classroom_id' => $this->classroom->id,
     ]);
 
-    // Initialize MealService
-    $this->service = new MealService;
+    // Initialize MealService with dependencies
+    $this->service = new MealService(new \App\Services\SemesterService);
 });
 
 /* ========================================

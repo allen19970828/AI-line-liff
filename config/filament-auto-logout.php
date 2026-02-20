@@ -16,7 +16,7 @@ return [
      *
      * A sensible default has been set to 15 minutes
      */
-    'duration_in_seconds' => env('FILAMENT_AUTO_LOGOUT_DURATION_IN_SECONDS', Carbon::SECONDS_PER_MINUTE * 15),
+    'duration_in_seconds' => env('FILAMENT_AUTO_LOGOUT_DURATION_IN_SECONDS', 60 * 15),
 
     /**
      * A notification will be sent to the user before logging out.

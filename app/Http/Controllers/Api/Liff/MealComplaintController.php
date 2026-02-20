@@ -19,7 +19,7 @@ class MealComplaintController extends Controller
         $user = $request->user();
         $staff = Staff::where('user_id', $user->id)->first();
 
-        if (! $staff) {
+        if (!$staff) {
             return response()->json(['status' => 'error', 'message' => '找不到教職員資料'], 403);
         }
 
@@ -27,12 +27,12 @@ class MealComplaintController extends Controller
             ->with(['classroom', 'school'])
             ->latest()
             ->get()
-            ->map(fn ($c) => [
+            ->map(fn($c) => [
                 'id' => $c->id,
                 'occurred_at' => $c->occurred_at->toDateString(),
                 'classroom_name' => $c->classroom?->class_name ?? '全校性',
                 'content' => $c->content,
-                'photo_url' => $c->photo_path ? Storage::disk('public')->url($c->photo_path) : null,
+                'photo_url' => $c->photo_path ? Storage::url($c->photo_path) : null,
                 'status' => $c->status,
                 'status_text' => match ($c->status) {
                     'pending' => '待處理',
@@ -58,7 +58,7 @@ class MealComplaintController extends Controller
         $user = $request->user();
         $staff = Staff::where('user_id', $user->id)->first();
 
-        if (! $staff) {
+        if (!$staff) {
             return response()->json(['status' => 'error', 'message' => '找不到教職員資料'], 403);
         }
 
@@ -95,7 +95,7 @@ class MealComplaintController extends Controller
 
             // 🆕 通知午餐秘書 (寫入彙整日誌)
             $schoolName = $staff->school?->name ?? '未知學校';
-            $logMsg = "【新意見回報】\n學校：{$schoolName}\n回報者：{$staff->name}\n描述：{$request->input('content')}\n時間：".now()->toDateTimeString();
+            $logMsg = "【新意見回報】\n學校：{$schoolName}\n回報者：{$staff->name}\n描述：{$request->input('content')}\n時間：" . now()->toDateTimeString();
             \Illuminate\Support\Facades\Log::channel('daily')->info($logMsg);
 
             return response()->json([
@@ -107,7 +107,7 @@ class MealComplaintController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => '發生意外錯誤：'.$e->getMessage(),
+                'message' => '發生意外錯誤：' . $e->getMessage(),
             ], 500);
         }
     }
