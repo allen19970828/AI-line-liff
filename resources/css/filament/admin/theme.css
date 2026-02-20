@@ -1,6 +1,13 @@
-@import "tailwindcss";
+@import "../../../../vendor/filament/filament/resources/css/theme.css";
 @import "../../../../vendor/guava/calendar/resources/css/theme.css";
 
-@source '../../../../app/Filament/**/*';
-@source '../../../../resources/views/filament/**/*';
+@source '../../../../app/Filament/**/*.php';
+@source '../../../../resources/views/filament/**/*.blade.php';
+@source '../../../../resources/views/liff/**/*.blade.php';
 @source '../../../../vendor/guava/calendar/resources/**/*';
+@source '../../../../vendor/jeffgreco13/filament-breezy/resources/**/*.blade.php';
+@source '../../../../vendor/saade/filament-laravel-log/resources/**/*.blade.php';
+@source '../../../../vendor/tapp/filament-authentication-log/resources/**/*.blade.php';
+@source '../../../../vendor/niladam/filament-auto-logout/resources/**/*.blade.php';
+@source '../../../../vendor/bezhansalleh/filament-shield/resources/**/*.blade.php';
+@source '../../../../vendor/pxlrbt/filament-activity-log/resources/**/*.blade.php';
