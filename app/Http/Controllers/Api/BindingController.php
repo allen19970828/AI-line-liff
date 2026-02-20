@@ -86,9 +86,9 @@ class BindingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Binding Error: '.$e->getMessage());
+            Log::error('Binding Error', ['error' => $e->getMessage(), 'user_id' => $user->id, 'code' => $code]);
 
-            return response()->json(['message' => '綁定失敗，請稍後再試: '.$e->getMessage()], 500);
+            return response()->json(['message' => '綁定失敗，請稍後再試。'], 500);
         }
     }
 

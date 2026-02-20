@@ -4,6 +4,7 @@ namespace App\Ai\Tools;
 
 use App\Models\MealComplaint;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 
@@ -40,7 +41,7 @@ class SubmitFeedbackTool implements Tool
             return '抱歉，意見反應功能目前僅開放給教職員使用。';
         }
 
-        $content = $request->string('content');
+        $content = strip_tags($request->string('content'));
         $score = $request->integer('score');
 
         // 2. 建立回饋紀錄
@@ -60,7 +61,9 @@ class SubmitFeedbackTool implements Tool
             return "✅ 已收到您的寶貴意見{$feedbackMsg}！\n我們會轉達給廚房與行政團隊，謝謝您的回饋。";
 
         } catch (\Exception $e) {
-            return "❌ 意見提交失敗：{$e->getMessage()}";
+            Log::error('意見回饋提交失敗', ['error' => $e->getMessage(), 'user_id' => $user->id]);
+
+            return '❌ 意見提交失敗：系統處理時發生問題，請稍後再試。';
         }
     }
 }

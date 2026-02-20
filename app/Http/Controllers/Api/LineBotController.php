@@ -108,10 +108,9 @@ class LineBotController extends Controller
 
                 $replyText = (string) $response;
 
-            } catch (\Throwable $e) { // 改用 Throwable 抓取所有嚴重錯誤
-                Log::error('Groq 嚴重錯誤: '.$e->getMessage());
-                Log::error($e->getTraceAsString()); // 記錄詳細錯誤位置
-                $replyText = '小秘發生錯誤：'.$e->getMessage(); // 把錯誤直接回傳到 LINE (開發階段用)
+            } catch (\Throwable $e) {
+                Log::error('AI Agent 嚴重錯誤', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(), 'line_user' => $lineUserId]);
+                $replyText = '小秘目前忙碌中，請稍後再試 🔧';
             }
             // 6. 回覆訊息 (包含 Quick Replies)
             try {

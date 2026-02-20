@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Services\LineIdentityService;
 use App\Services\MealService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 
@@ -90,7 +91,9 @@ class CancelMealTool implements Tool
                 return "成功：已為 {$classroom->class_full_name} 申請 {$date} 全班停餐 (共 {$count} 人)。";
 
             } catch (\Exception $e) {
-                return '申請失敗：'.$e->getMessage();
+                Log::error('全班停餐申請失敗', ['error' => $e->getMessage(), 'user_id' => $user->id, 'classroom' => $className]);
+
+                return '申請失敗：系統處理時發生問題，請稍後再試或通知管理員。';
             }
         }
 
@@ -142,7 +145,9 @@ class CancelMealTool implements Tool
                 return "成功：已為 {$student->classroom->class_full_name} {$student->name} 申請 {$date} 停餐。";
 
             } catch (\Exception $e) {
-                return '申請失敗：'.$e->getMessage();
+                Log::error('個人停餐申請失敗', ['error' => $e->getMessage(), 'user_id' => $user->id, 'student' => $studentName]);
+
+                return '申請失敗：系統處理時發生問題，請稍後再試或通知管理員。';
             }
         }
 

@@ -148,7 +148,7 @@ class SurveyApiController extends Controller
                 // 3. 建立 Answers
                 foreach ($validated['answers'] as $answerData) {
                     // 處理複選題 (如果是陣列轉 JSON 字串，或視需求存)
-                    $textValue = $answerData['text_value'] ?? null;
+                    $textValue = $answerData['text_value'] ? strip_tags($answerData['text_value']) : null;
                     if (isset($answerData['options']) && is_array($answerData['options'])) {
                         $textValue = json_encode($answerData['options'], JSON_UNESCAPED_UNICODE);
                     }

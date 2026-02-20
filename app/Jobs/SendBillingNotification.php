@@ -50,7 +50,7 @@ class SendBillingNotification implements ShouldQueue
         try {
             $client = new \LINE\Clients\MessagingApi\Api\MessagingApiApi(
                 new \GuzzleHttp\Client,
-                (new \LINE\Clients\MessagingApi\Configuration)->setAccessToken(config('services.line.channel_token'))
+                (new \LINE\Clients\MessagingApi\Configuration)->setAccessToken(config('services.line.channel_access_token'))
             );
 
             $message = new \LINE\Clients\MessagingApi\Model\TextMessage([

@@ -68,7 +68,7 @@ class GetDailyMenuTool implements Tool
                 'contents' => [
                     [
                         'type' => 'text',
-                        'text' => '🏫 '.$menuData['school_name'],
+                        'text' => '🏫 '.e($menuData['school_name']),
                         'weight' => 'bold',
                         'size' => 'sm',
                         'color' => '#1DB446',
@@ -109,8 +109,8 @@ class GetDailyMenuTool implements Tool
 
         // 填充菜色
         foreach ($menuData['dishes'] as $dish) {
-            $dishType = $dish['DishType'] ?? '其他';
-            $dishName = $dish['DishName'] ?? '未提供名稱';
+            $dishType = e($dish['DishType'] ?? '其他');
+            $dishName = e($dish['DishName'] ?? '未提供名稱');
 
             if (in_array($dishType, ['附餐', '調味料'])) {
                 continue;

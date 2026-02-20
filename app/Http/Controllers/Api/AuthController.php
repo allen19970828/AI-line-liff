@@ -22,7 +22,7 @@ class AuthController extends Controller
         ]);
 
         $idToken = $request->input('idToken');
-        $channelId = config('services.line.login_channel_id', env('LINE_LOGIN_CHANNEL_ID'));
+        $channelId = config('services.line.login_channel_id');
 
         try {
             // 1. Verify ID Token with LINE
@@ -31,7 +31,7 @@ class AuthController extends Controller
                 'client_id' => $channelId,
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('LINE ID Token Verification Failed', ['response' => $response->json()]);
 
                 return response()->json(['message' => 'Invalid ID Token'], 401);
@@ -97,9 +97,9 @@ class AuthController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('LIFF Login Exception', ['error' => $e->getMessage()]);
+            Log::error('LIFF Login Exception', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 
-            return response()->json(['message' => 'Login failed: ' . $e->getMessage()], 500);
+            return response()->json(['message' => '登入失敗，請稍後再試。'], 500);
         }
     }
 }
