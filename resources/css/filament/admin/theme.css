@@ -1,3 +1,4 @@
+@import "tailwindcss";
 @import "../../../../vendor/guava/calendar/resources/css/theme.css";
 
 @source '../../../../app/Filament/**/*';
