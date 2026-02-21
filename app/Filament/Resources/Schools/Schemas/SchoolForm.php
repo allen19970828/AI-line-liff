@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Schools\Schemas;
 
-use App\Models\School;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -106,15 +105,15 @@ class SchoolForm
                                     ->description('系統自動生成的唯一報到代碼，不可修改。')
                                     ->readOnly()
                                     ->prefixIcon('heroicon-m-qr-code')
-                                    ->visible(fn ($record) => $record !== null),
+                                    ->visibleOn('edit'),
 
                                 Placeholder::make('created_at')
                                     ->label('建立時間')
-                                    ->content(fn (?School $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                                    ->content(fn ($record): string => $record?->created_at?->diffForHumans() ?? '-'),
 
                                 Placeholder::make('updated_at')
                                     ->label('最後更新')
-                                    ->content(fn (?School $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                    ->content(fn ($record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                             ]),
                     ])
                     ->columnSpan(['lg' => 1]),
