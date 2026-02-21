@@ -36,6 +36,7 @@ class SchoolRepairCommand extends Command
         $this->info("發現 {$schools->count()} 所學校缺失特徵碼，開始修補...");
 
         foreach ($schools as $school) {
+            /** @var \App\Models\School $school */
             $school->checkin_code = 'chk_'.strtolower(\Illuminate\Support\Str::random(12));
             $school->save();
             $this->line(" - 修補學校: {$school->name} [{$school->checkin_code}]");

@@ -306,10 +306,10 @@
                             const ans = this.answers[q.id];
                             let filled = false;
 
-                            if (q.question_type === 'text') filled = !!ans.text_value.trim();
-                            else if (q.question_type === 'rating') filled = !!ans.rating_value;
-                            else if (q.question_type === 'single_choice') filled = !!ans.text_value;
-                            else if (q.question_type === 'multiple_choice') filled = ans.options.length > 0;
+                            if (['text', 'textarea'].includes(q.type)) filled = !!ans.text_value.trim();
+                            else if (['rating_5', 'rating_10'].includes(q.type)) filled = !!ans.rating_value;
+                            else if (['radio', 'select'].includes(q.type)) filled = !!ans.text_value;
+                            else if (q.type === 'checkbox') filled = ans.options.length > 0;
 
                             if (!filled) {
                                 alert(`請回答第 ${this.survey.questions.indexOf(q) + 1} 題`);
