@@ -23,8 +23,10 @@ class CheckInController extends Controller
 
         $code = $request->code;
 
-        // 宗師心法：如果掃到的是完整 URL，自動萃取裡面的 code 參數
-        if (filter_var($code, FILTER_VALIDATE_URL)) {
+        // 宗師心法：更強大的特徵碼萃取 (支援完整 URL 或純代碼)
+        if (preg_match('/[?&]code=([^&]+)/', $code, $matches)) {
+            $code = $matches[1];
+        } elseif (filter_var($code, FILTER_VALIDATE_URL)) {
             $parsedUrl = parse_url($code);
             if (isset($parsedUrl['query'])) {
                 parse_str($parsedUrl['query'], $query);
@@ -36,7 +38,7 @@ class CheckInController extends Controller
         $school = School::where('checkin_code', $code)->first();
         $targetStaff = null;
 
-        if (! $school) {
+        if (!$school) {
             // 宗師心法：如果沒找到學校，嘗試找個人用餐碼 (lunch_code)
             $targetStaff = \App\Models\Staff::where('lunch_code', $code)
                 ->where('is_active', true)
@@ -47,7 +49,7 @@ class CheckInController extends Controller
             }
         }
 
-        if (! $school) {
+        if (!$school) {
             return response()->json([
                 'message' => '無效的 QR Code 或代碼已失效',
             ], 422);
