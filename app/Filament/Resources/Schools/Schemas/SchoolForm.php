@@ -101,6 +101,13 @@ class SchoolForm
                                     ->onIcon('heroicon-m-check-circle')
                                     ->onColor('success'),
 
+                                TextInput::make('checkin_code')
+                                    ->label('報到特徵碼')
+                                    ->description('系統自動生成的唯一報到代碼，不可修改。')
+                                    ->readOnly()
+                                    ->prefixIcon('heroicon-m-qr-code')
+                                    ->visible(fn ($record) => $record !== null),
+
                                 Placeholder::make('created_at')
                                     ->label('建立時間')
                                     ->content(fn (?School $record): string => $record?->created_at?->diffForHumans() ?? '-'),

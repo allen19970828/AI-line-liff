@@ -34,27 +34,39 @@ class CheckInController extends Controller
 
         // 1. Find school by checkin_code
         $school = School::where('checkin_code', $code)->first();
+        $targetStaff = null;
+
+        if (! $school) {
+            // 宗師心法：如果沒找到學校，嘗試找個人用餐碼 (lunch_code)
+            $targetStaff = \App\Models\Staff::where('lunch_code', $code)
+                ->where('is_active', true)
+                ->first();
+
+            if ($targetStaff) {
+                $school = $targetStaff->school;
+            }
+        }
 
         if (! $school) {
             return response()->json([
-                'message' => '無效的 QR Code',
+                'message' => '無效的 QR Code 或代碼已失效',
             ], 422);
         }
 
         // 2. Security Check: School Isolation
-        // Must match user's assigned school_id
+        // Must match user's assigned school_id (User scanning or Scanner being authenticated)
         if ($user->school_id !== $school->id) {
             return response()->json([
-                'message' => '這不是您所屬單位的 QR Code，請勿跨校掃描',
+                'message' => '這不是您所屬單位的代碼，請勿跨校處理',
             ], 403);
         }
 
         // 3. Record Check-in
-        $checkIn = DB::transaction(function () use ($user, $school, $request) {
+        $checkIn = DB::transaction(function () use ($user, $school, $targetStaff, $request) {
             return StaffCheckIn::create([
                 'school_id' => $school->id,
-                'user_id' => $user->id,
-                'staff_id' => $user->staff->id ?? null, // Assuming User has one Staff record
+                'user_id' => $targetStaff?->user_id ?? $user->id, // If scannned a staff, record for them. If scannned a school, record for current user.
+                'staff_id' => $targetStaff?->id ?? $user->staff?->id,
                 'checkin_code' => $request->code,
                 'checked_at' => now(),
                 'ip_address' => $request->ip(),
