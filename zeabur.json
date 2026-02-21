@@ -1,8 +1,5 @@
 {
   "build": {
     "command": "composer install --no-dev --optimize-autoloader && npm install && npm run build"
-  },
-  "deploy": {
-    "start_command": "php artisan migrate --force && php artisan optimize"
   }
 }
