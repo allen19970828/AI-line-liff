@@ -18,7 +18,7 @@ class DemoDataSeeder extends Seeder
         // 1. 鎖定我們的「系統測試小學」 (DatabaseSeeder 中建立的 code 是 TEST001)
         $school = School::where('code', 'TEST001')->first();
 
-        if (! $school) {
+        if (!$school) {
             $this->command->warn('⚠️ 找不到測試學校 (TEST001)，跳過 Demo Data 生成。');
 
             return;
@@ -74,7 +74,7 @@ class DemoDataSeeder extends Seeder
             Staff::updateOrCreate(
                 ['school_id' => $school->id, 'name' => $data['name']],
                 [
-                    'lunch_code' => 'lunch'.str_pad($index + 1, 3, '0', STR_PAD_LEFT),
+                    'lunch_code' => 'lunch' . str_pad($index + 1, 3, '0', STR_PAD_LEFT),
                     'job_title' => $data['job'],
                     'stage' => $data['stage'],
                     'staff_role' => $data['staff_role'],
