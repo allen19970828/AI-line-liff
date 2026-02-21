@@ -7,6 +7,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ext-pdo_pgsql": "*",
+        "ext-pgsql": "*",
         "bezhansalleh/filament-shield": "^4.1",
         "echolabsdev/prism": "^0.99.19",
         "filament/filament": "^4.0",
