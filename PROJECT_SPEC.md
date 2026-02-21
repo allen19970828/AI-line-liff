@@ -134,3 +134,28 @@
 - **自動化部署**: 系統整合 GitHub Action 與 Zeabur，推送至 `main` 分支即觸發自動建置。
 - **環境變數**: 部署後需在 Zeabur 後台配置 `APP_KEY`、`LINE_CHANNEL_ID` 等必要密鑰。
 - **靜態資源**: 部署流程會自動執行編譯，免手動上傳 `public/build`。
+
+### 7.3 Zeabur 部署優化與陷阱 (Deployment Pitfalls)
+
+根據專案開發經驗，在 Zeabur 部署此 TALL Stack 生態系（Filament v4 + Tailwind v4）時，必須遵守以下關鍵配置：
+
+#### A. Vite 與 Tailwind v4 修正
+
+- **Base Import**: 每個自定義的 CSS 檔案（如 `theme.css`）**必須包含** `@import "tailwindcss";`，否則 Tailwind v4 編譯器無法識別 `@source` 掃描到的 Utility 類別（如 `rounded-lg`），會導致構建失敗。
+- **路徑解析**: Filament Theme 的 `@import` 路徑必須指向精確的實體檔案路徑（如 `../../filament-vendor/filament/dist/theme.css`），避免使用模糊路徑。
+
+#### B. 信任代理 (Trusted Proxies) 與 HTTPS
+
+- **協議識別**: 由於雲端環境（Zeabur）位於反向代理後方，必須在 `bootstrap/app.php` 中設定 `$middleware->trustProxies(at: '*')`。
+- **後果**: 若未設定，系統會產生 `http` 的 URL（Mixed Content），導致瀏覽器封鎖 CSS/JS 檔案加載。
+
+#### C. 語系與本地化 (Localization)
+
+- **命名規範**: 統一使用 **`zh_TW`** (底線) 而非 `zh-TW`。Filament 的 vendor 語系包遵循此命名規則。
+- **發布語系**: 建議發布 Filament 語系至專案目錄：`php artisan vendor:publish --tag=filament-panels-translations`。這確保了部署環境能穩定讀取到中文語系包。
+
+#### D. 相依性與構建流程
+
+- **Prism 衝突**: 優先使用 `prism-php/prism` 而非舊版的 `echolabsdev/prism`，以確保與 `laravel/ai` 的最高相容性。
+- **Esbuild 版本**: `zeabur.json` 的構建指令應包含 `npm install`，以解決 Node 版本緩存導致的 `esbuild` binary version mismatch。
+- **環境變數優化**: 若構建階段因缺乏 `APP_KEY` 導致 `artisan optimize` 報錯，可在 Zeabur 關閉 `ZBPACK_PHP_OPTIMIZE`。
