@@ -36,7 +36,13 @@ class ListCancellationTool implements Tool
         $date = $request->string('date') ?? Carbon::today()->toDateString();
         $targetDate = Carbon::parse($date);
 
-        // 1. 查詢該日期的停餐申請
+        // 0. 身份驗證守衛：確認使用者已登入且有學校歸屬
+        $user = auth()->user();
+        if (! $user || ! $user->school_id) {
+            return '抱歉，查詢停餐名單功能僅開放給已綁定學校的教職員使用。';
+        }
+
+        // 1. 查詢該日期的停餐申請 (BelongsToSchool Trait 已自動套用學校範圍隔離)
         $requests = MealCancelRequest::query()
             ->whereDate('start_date', '<=', $targetDate)
             ->whereDate('end_date', '>=', $targetDate)

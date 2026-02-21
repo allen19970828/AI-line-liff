@@ -159,6 +159,9 @@ class LineBotController extends Controller
                     $json = substr($replyText, 5);
                     $data = json_decode($json, true);
 
+                    // [安全強化] 對所有 Flex Message 字串值進行隱式淨化
+                    $data = $this->sanitizeFlexData($data);
+
                     $message = \LINE\Clients\MessagingApi\Model\Message::fromAssocArray([
                         'type' => 'flex',
                         'altText' => '您有一則菜單訊息',
@@ -188,7 +191,7 @@ class LineBotController extends Controller
         return response('OK', 200);
     }
 
-    private function replyText($client, $replyToken, $text)
+    private function replyText($client, string $replyToken, string $text): void
     {
         try {
             $message = new \LINE\Clients\MessagingApi\Model\TextMessage(['type' => 'text', 'text' => $text]);
@@ -200,5 +203,24 @@ class LineBotController extends Controller
         } catch (\Exception $e) {
             Log::error('LINE Reply Error: '.$e->getMessage());
         }
+    }
+
+    /**
+     * [安全結界] 遞迴清除 Flex Message JSON 中所有字串值
+     * 防止 AI 工具產生的恶意内容透過 Flex Message 注入到使用者的 LINE 畫面。
+     */
+    private function sanitizeFlexData(mixed $data): mixed
+    {
+        if (is_string($data)) {
+            return strip_tags($data);
+        }
+
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = $this->sanitizeFlexData($value);
+            }
+        }
+
+        return $data;
     }
 }

@@ -41,13 +41,28 @@ class BindingController extends Controller
             // [New] Auto-Link or Create Staff
             $staff = \App\Models\Staff::where('school_id', $school->id)
                 ->where('name', $realName)
-                ->first();
+                ->get();
+
+            // [安全強化] 防止重名誤領
+            if ($staff->count() > 1) {
+                return response()->json([
+                    'message' => "找到 {$staff->count()} 位同名教職員「{$realName}」，無法自動連結。請聯絡管理員協助手動分配。",
+                ], 409);
+            }
+
+            $staff = $staff->first();
 
             if ($staff) {
-                // [Found] Link to user if not already linked (or overwrite if needed)
+                // [安全強化] 檢查显護是否已被其他用戶佔用
+                if ($staff->user_id && $staff->user_id !== $user->id) {
+                    return response()->json([
+                        'message' => "教職員「{$realName}」的帳曶已被其他使用者連結，請聯絡管理員處理。",
+                    ], 409);
+                }
+                // [已存在且可用] 連結到用戶如果尚未連結
                 if (! $staff->user_id) {
                     $staff->user_id = $user->id;
-                    // Reactivate if resigning and coming back
+                    // 重新激活如果曾經離職再歸來
                     $staff->is_active = true;
                     $staff->save();
                     Log::info("Binding User {$user->id} to existing Staff {$staff->id}");

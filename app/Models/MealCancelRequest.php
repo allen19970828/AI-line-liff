@@ -4,15 +4,17 @@ namespace App\Models;
 
 use App\Enums\Meals\CancelLeaveType;
 use App\Enums\Meals\CancelRequestStatus;
+use App\Models\Traits\BelongsToSchool;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MealCancelRequest extends Model
 {
-    use HasFactory;
+    use BelongsToSchool, HasFactory;
 
     protected $fillable = [
+        'school_id',
         'cancellable_id',
         'cancellable_type',
         'start_date',
