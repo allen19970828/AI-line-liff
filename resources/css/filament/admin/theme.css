@@ -1,4 +1,4 @@
-@import "../../filament-vendor/theme.css";
+@import "../../filament-vendor/filament/dist/theme.css";
 @import "../../guava-calendar-theme.css";
 
 @source '../../../../app/Filament/**/*.php';
