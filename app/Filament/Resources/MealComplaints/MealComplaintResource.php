@@ -22,11 +22,11 @@ class MealComplaintResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'id';
 
-    protected static ?string $modelLabel = '餐點意見';
+    protected static ?string $modelLabel = '當日用餐問題反應';
 
-    protected static ?string $pluralModelLabel = '餐點意見';
+    protected static ?string $pluralModelLabel = '當日用餐問題反應';
 
-    protected static ?string $navigationLabel = '餐點意見';
+    protected static ?string $navigationLabel = '當日用餐問題反應';
 
     public static function form(Schema $schema): Schema
     {

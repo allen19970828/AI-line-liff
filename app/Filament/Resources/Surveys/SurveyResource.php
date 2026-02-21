@@ -36,6 +36,11 @@ class SurveyResource extends Resource
 
     protected static ?string $modelLabel = '問卷';
 
+    public static function getPluralModelLabel(): string
+    {
+        return '問卷清單';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema

@@ -18,6 +18,16 @@ class LineAccountResource extends Resource
 
     protected static ?string $navigationLabel = 'LINE 帳號管理';
 
+    public static function getModelLabel(): string
+    {
+        return 'LINE 帳號';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'LINE 帳號名冊';
+    }
+
     protected static string|\UnitEnum|null $navigationGroup = '系統設定';
 
     protected static ?int $navigationSort = 10;

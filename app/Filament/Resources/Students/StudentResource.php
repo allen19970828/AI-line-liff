@@ -24,6 +24,16 @@ class StudentResource extends Resource
 
     protected static ?string $navigationLabel = '學生資料管理';
 
+    public static function getModelLabel(): string
+    {
+        return '學生';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '學生清單';
+    }
+
     protected static string|UnitEnum|null $navigationGroup = '學籍與補助';
 
     protected static ?int $navigationSort = 1;

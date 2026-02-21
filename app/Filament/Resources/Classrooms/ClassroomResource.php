@@ -26,6 +26,16 @@ class ClassroomResource extends Resource
 
     protected static ?string $navigationLabel = '班級資料管理';
 
+    public static function getModelLabel(): string
+    {
+        return '班級';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '班級清單';
+    }
+
     protected static string|\UnitEnum|null $navigationGroup = '學籍與補助';
 
     protected static ?int $navigationSort = 2; // 排在學生管理之後
