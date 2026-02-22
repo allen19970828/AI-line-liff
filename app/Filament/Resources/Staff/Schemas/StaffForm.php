@@ -48,7 +48,7 @@ class StaffForm
                                         ->relationship(
                                             name: 'user',
                                             titleAttribute: 'name',
-                                            modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query, SchemaGet $get) => $query->where('school_id', clone $get('school_id'))
+                                            modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query, SchemaGet $get) => $query->where('school_id', $get('school_id'))
                                         )
                                         ->searchable()
                                         ->preload()
