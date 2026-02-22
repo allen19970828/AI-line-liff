@@ -43,6 +43,9 @@ class SystemSelfHealingCommand extends Command
         // 4. 觸發學校資料修補 (checkin_code)
         $this->call('school:repair');
 
+        // 5. 修復 LineAccount 的 school_id 同步問題
+        $this->fixLineAccountSchoolIds();
+
         $this->info('檢修完成。');
         Log::channel('daily')->info('System Self-Healing completed.');
 
@@ -129,6 +132,37 @@ class SystemSelfHealingCommand extends Command
             }
         } catch (\Exception $e) {
             $this->error(' - 無法檢查資料庫遷移狀態：'.$e->getMessage());
+        }
+    }
+
+    /**
+     * 修復 LineAccount 的 school_id 同步問題
+     * 過去綁定/解綁時可能遺漏更新 LineAccount 的 school_id，導致在後台消失
+     */
+    protected function fixLineAccountSchoolIds(): void
+    {
+        $this->info(' - 開始檢查 LineAccount 資料同步狀態...');
+        try {
+            $count = 0;
+            \App\Models\LineAccount::withoutGlobalScopes()
+                ->whereNotNull('user_id')
+                ->get()
+                ->each(function ($acc) use (&$count) {
+                    if ($acc->user && $acc->school_id !== $acc->user->school_id) {
+                        $acc->school_id = $acc->user->school_id;
+                        $acc->save();
+                        $count++;
+                    }
+                });
+
+            if ($count > 0) {
+                $this->info(" - 成功修復 {$count} 筆 LineAccount 的 school_id");
+                \Illuminate\Support\Facades\Log::info("Self-Heal: Fixed {$count} LineAccount school_ids.");
+            } else {
+                $this->line(' - LineAccount 資料同步無異常。');
+            }
+        } catch (\Exception $e) {
+            $this->error(' - LineAccount 修復失敗：'.$e->getMessage());
         }
     }
 }

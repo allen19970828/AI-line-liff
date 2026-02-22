@@ -45,7 +45,11 @@ class StaffForm
                                     // 2. 帳號綁定
                                     Select::make('user_id')
                                         ->label('綁定系統帳號')
-                                        ->relationship('user', 'name')
+                                        ->relationship(
+                                            name: 'user',
+                                            titleAttribute: 'name',
+                                            modifyQueryUsing: fn (\Illuminate\Database\Eloquent\Builder $query, SchemaGet $get) => $query->where('school_id', clone $get('school_id'))
+                                        )
                                         ->searchable()
                                         ->preload()
                                         ->helperText('若該員為廚工或無需登入者，請留空。')

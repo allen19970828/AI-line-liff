@@ -38,6 +38,13 @@ class BindingController extends Controller
             $user->school_id = $school->id;
             $user->save();
 
+            // [修正] 同步更新 LineAccount 的 school_id，否則會因為 Global Scope 在後台消失
+            if ($user->lineAccount) {
+                // Must explicitly save the related model
+                $user->lineAccount->school_id = $school->id;
+                $user->lineAccount->save();
+            }
+
             // [New] Auto-Link or Create Staff
             $staff = \App\Models\Staff::where('school_id', $school->id)
                 ->where('name', $realName)
@@ -138,6 +145,12 @@ class BindingController extends Controller
             // Unlink User
             $user->school_id = null;
             $user->save();
+
+            // [修正] 同步清除 LineAccount 的 school_id
+            if ($user->lineAccount) {
+                $user->lineAccount->school_id = null;
+                $user->lineAccount->save();
+            }
 
             return response()->json([
                 'message' => '已解除綁定並標記離職',
