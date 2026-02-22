@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 
 class PrintLunchFeeNotification extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-printer';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-printer';
 
     protected static ?string $navigationLabel = '午餐費通知單列印';
 
