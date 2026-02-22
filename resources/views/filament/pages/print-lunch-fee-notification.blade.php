@@ -97,7 +97,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($overview['rows'] as $idx => $row)
+                        @foreach($overview['rows'] ?? [] as $idx => $row)
                             <tr>
                                 <td class="border-2 border-black p-3 font-bold text-lg leading-tight">{{ $row['label'] }}
                                 </td>

@@ -114,12 +114,12 @@ class PrintLunchFeeNotification extends Page implements HasForms
     public function getBillingOverview(): array
     {
         if (empty($this->data['semester_id'])) {
-            return [];
+            return ['rows' => []];
         }
 
         $semester = Semester::find($this->data['semester_id']);
         if (! $semester) {
-            return [];
+            return ['rows' => []];
         }
 
         $service = app(MealBillingService::class);
