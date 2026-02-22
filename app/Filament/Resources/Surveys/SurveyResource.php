@@ -152,8 +152,8 @@ class SurveyResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ReplicateAction::make()
+                \Filament\Actions\EditAction::make(),
+                \Filament\Actions\ReplicateAction::make()
                     ->label('複製問卷')
                     ->modalHeading('複製問卷')
                     ->modalDescription('這將會複製此問卷的所有設定與題目內容。')
@@ -172,8 +172,8 @@ class SurveyResource extends Resource
                     }),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
