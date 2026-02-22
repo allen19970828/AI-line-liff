@@ -323,6 +323,28 @@
                     isLoading: false
                 },
 
+                backfill: {
+                    yearMonth: (function () {
+                        const d = new Date();
+                        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                    })(),
+                    calendarDays: [],
+                    selectedDates: [],
+                    originalDates: [],
+                    qrDates: [],
+                    firstDayOffset: 0,
+                    mealPrice: 0,
+                    isLocked: false,
+                    isLoading: false,
+                    isSubmitting: false,
+                    successMessage: '',
+                    get changesCount() {
+                        const added = this.selectedDates.filter(d => !this.originalDates.includes(d)).length;
+                        const removed = this.originalDates.filter(d => !this.selectedDates.includes(d)).length;
+                        return added + removed;
+                    }
+                },
+
                 async init() {
                     // [新增] 監聽登入成功事件，更新設定
                     window.addEventListener('auth-success', (e) => {
@@ -924,6 +946,76 @@
                     } finally {
                         this.settlement.isLoading = false;
                     }
+                },
+
+                async fetchBackfillCalendar() {
+                    this.backfill.isLoading = true;
+                    try {
+                        const { data } = await axios.get('/api/settlement/backfill-calendar', {
+                            params: { year_month: this.backfill.yearMonth }
+                        });
+
+                        // 轉換月曆資料為陣列
+                        const days = Object.values(data.calendar_days || {});
+                        this.backfill.calendarDays = days;
+
+                        // 計算第一天的偏移量 (ISO: 1=Mon)
+                        if (days.length > 0) {
+                            this.backfill.firstDayOffset = days[0].day_of_week - 1;
+                        }
+
+                        // 設定已簽到日期
+                        this.backfill.selectedDates = [...(data.checked_dates || [])];
+                        this.backfill.originalDates = [...(data.checked_dates || [])];
+                        this.backfill.isLocked = data.is_locked || false;
+                        this.backfill.mealPrice = data.meal_price || 0;
+
+                        // 分離 QR 簽到與補登紀錄 (目前簡化：所有已簽到都顯示為綠色，後續可分开免)
+                        this.backfill.qrDates = [];
+                    } catch (e) {
+                        console.error('Fetch backfill calendar failed', e);
+                    } finally {
+                        this.backfill.isLoading = false;
+                    }
+                },
+
+                toggleBackfillDate(dateStr) {
+                    if (this.backfill.isLocked) return;
+                    const idx = this.backfill.selectedDates.indexOf(dateStr);
+                    if (idx > -1) {
+                        this.backfill.selectedDates.splice(idx, 1);
+                    } else {
+                        this.backfill.selectedDates.push(dateStr);
+                    }
+                },
+
+                async submitBackfill() {
+                    if (this.backfill.isSubmitting) return;
+                    this.backfill.isSubmitting = true;
+                    try {
+                        const addDates = this.backfill.selectedDates.filter(d => !this.backfill.originalDates.includes(d));
+                        const removeDates = this.backfill.originalDates.filter(d => !this.backfill.selectedDates.includes(d));
+
+                        const { data } = await axios.post('/api/settlement/backfill', {
+                            year_month: this.backfill.yearMonth,
+                            add_dates: addDates,
+                            remove_dates: removeDates,
+                        });
+
+                        this.backfill.successMessage = data.message || '補登成功！';
+                        this.backfill.originalDates = [...this.backfill.selectedDates];
+
+                        // 同步更新 settlement 資料
+                        if (this.settlement.yearMonth === this.backfill.yearMonth) {
+                            this.settlement.daysCount = data.days_count || 0;
+                            this.settlement.amount = data.amount || 0;
+                            this.settlement.dates = data.checked_dates || [];
+                        }
+                    } catch (e) {
+                        alert(e.response?.data?.message || '補登失敗，請稍後再試');
+                    } finally {
+                        this.backfill.isSubmitting = false;
+                    }
                 }
             }
         };
@@ -986,6 +1078,7 @@
         @include('liff.components.settings')
         @include('liff.components.complaints')
         @include('liff.components.settlement')
+        @include('liff.components.meal-backfill')
 
         <!-- Group Management Modal (Moved inside x-data scope) -->
         <div x-show="cancellation.showGroupManager" x-cloak

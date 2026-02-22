@@ -51,4 +51,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Settlement (LIFF)
     Route::get('/settlement/current', [\App\Http\Controllers\Api\Liff\SettlementController::class, 'getCurrent']);
+    Route::get('/settlement/backfill-calendar', [\App\Http\Controllers\Api\Liff\SettlementController::class, 'getBackfillCalendar']);
+    Route::post('/settlement/backfill', [\App\Http\Controllers\Api\Liff\SettlementController::class, 'submitBackfill']);
 });
