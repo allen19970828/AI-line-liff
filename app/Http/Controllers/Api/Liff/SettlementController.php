@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LunchSettlement;
 use App\Models\Semester;
 use App\Models\StaffCheckIn;
+use App\Services\LunchSettlementService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -171,127 +172,31 @@ class SettlementController extends Controller
             'remove_dates.*' => 'date',
         ]);
 
-        $yearMonth = $request->year_month;
-        $parts = explode('-', $yearMonth);
-        $year = (int) $parts[0];
-        $month = (int) $parts[1];
+        try {
+            $service = app(LunchSettlementService::class);
+            $result = $service->processBackfill(
+                staff: $staff,
+                userId: $user->id,
+                yearMonth: $request->year_month,
+                addDates: $request->input('add_dates', []),
+                removeDates: $request->input('remove_dates', []),
+                ipAddress: $request->ip(),
+            );
 
-        // 只允許當月或前月
-        $currentYearMonth = now()->format('Y-m');
-        $lastMonth = now()->subMonth()->format('Y-m');
-        if ($yearMonth !== $currentYearMonth && $yearMonth !== $lastMonth) {
-            return response()->json(['message' => '只能補登當月或前月的用餐紀錄'], 422);
-        }
-
-        // 檢查是否已結算鎖定
-        $settlement = LunchSettlement::where('staff_id', $staff->id)
-            ->where('year_month', $yearMonth)
-            ->first();
-
-        if ($settlement && $settlement->status === 'paid') {
-            return response()->json(['message' => '本月已結清，無法修改'], 422);
-        }
-
-        // 查找學期
-        $startOfMonth = Carbon::create($year, $month, 1)->startOfDay();
-        $endOfMonth = $startOfMonth->copy()->endOfMonth();
-        $semester = Semester::where('school_id', $staff->school_id)
-            ->whereDate('start_date', '<=', $endOfMonth)
-            ->whereDate('end_date', '>=', $startOfMonth)
-            ->first();
-
-        $added = 0;
-        $removed = 0;
-
-        // 新增補登
-        $skippedDates = [];
-        $backfillCutoffTime = '12:40'; // 當日用餐截止時間
-
-        foreach ($request->input('add_dates', []) as $dateStr) {
-            $date = Carbon::parse($dateStr);
-
-            // 驗證日期在月份範圍內
-            if ($date->format('Y-m') !== $yearMonth) {
-                continue;
+            $msg = "補登完成：新增 {$result['added']} 天，刪除 {$result['removed']} 天";
+            if (count($result['skipped']) > 0) {
+                $msg .= '。跳過：'.implode('、', $result['skipped']);
             }
 
-            // 驗證不是非供餐日
-            if ($semester && $semester->isDayOff($date)) {
-                continue;
-            }
-
-            // 當天日期：必須過用餐截止時間才能補登
-            if ($date->isToday() && now()->format('H:i') < $backfillCutoffTime) {
-                $skippedDates[] = $dateStr.'（未過 '.$backfillCutoffTime.'）';
-
-                continue;
-            }
-
-            // 不能是未來日期
-            if ($date->gt(now()->endOfDay())) {
-                continue;
-            }
-
-            // 檢查是否已存在
-            $exists = StaffCheckIn::where('staff_id', $staff->id)
-                ->whereDate('checked_at', $date->toDateString())
-                ->exists();
-
-            if ($exists) {
-                $skippedDates[] = $dateStr.'（已登記）';
-
-                continue;
-            }
-
-            StaffCheckIn::create([
-                'school_id' => $staff->school_id,
-                'user_id' => $user->id,
-                'staff_id' => $staff->id,
-                'checkin_code' => 'backfill',
-                'checked_at' => $date->setTime(12, 0, 0),
-                'ip_address' => $request->ip(),
-                'user_agent' => 'LIFF-Backfill',
+            return response()->json([
+                'status' => 'success',
+                'message' => $msg,
+                'days_count' => $result['days_count'],
+                'amount' => $result['amount'],
+                'checked_dates' => $result['checked_dates'],
             ]);
-            $added++;
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        // 刪除補登 (只刪除 backfill 類型的紀錄，保護 QR 簽到的資料)
-        foreach ($request->input('remove_dates', []) as $dateStr) {
-            $date = Carbon::parse($dateStr);
-
-            if ($date->format('Y-m') !== $yearMonth) {
-                continue;
-            }
-
-            $deleted = StaffCheckIn::where('staff_id', $staff->id)
-                ->whereDate('checked_at', $date->toDateString())
-                ->where('checkin_code', 'backfill')
-                ->delete();
-
-            $removed += $deleted;
-        }
-
-        // 重新計算結算
-        $checkIns = StaffCheckIn::where('staff_id', $staff->id)
-            ->whereYear('checked_at', $year)
-            ->whereMonth('checked_at', $month)
-            ->get();
-
-        $uniqueDates = $checkIns->map(fn ($r) => $r->checked_at->toDateString())->unique()->values();
-        $daysCount = $uniqueDates->count();
-        $mealPrice = $semester ? $semester->meal_price : 0;
-
-        $msg = "補登完成：新增 {$added} 天，刪除 {$removed} 天";
-        if (count($skippedDates) > 0) {
-            $msg .= '。跳過：'.implode('、', $skippedDates);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => $msg,
-            'days_count' => $daysCount,
-            'amount' => $daysCount * $mealPrice,
-            'checked_dates' => $uniqueDates->toArray(),
-        ]);
     }
 }
