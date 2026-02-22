@@ -142,7 +142,7 @@ class ImportSchools extends Command
         }
 
         // 檢查現有資料量，若差異超過 50% 則發出警告
-        $existingCount = \App\Models\School::count();
+        $existingCount = School::count();
         if ($existingCount > 0 && abs($total - $existingCount) / $existingCount > 0.5) {
             $this->warn("⚠️ 警告：新資料 ({$total} 筆) 與現有資料 ({$existingCount} 筆) 差異超過 50%，請人工確認。");
             if (! $this->confirm('確定要繼續匯入嗎？')) {

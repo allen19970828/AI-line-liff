@@ -32,7 +32,7 @@ class MealComplaintController extends Controller
                 'occurred_at' => $c->occurred_at->toDateString(),
                 'classroom_name' => $c->classroom?->class_name ?? '全校性',
                 'content' => $c->content,
-                'photo_url' => $c->photo_path ? Storage::disk('public')->url($c->photo_path) : null,
+                'photo_url' => $c->photo_path ? Storage::url($c->photo_path) : null,
                 'status' => $c->status,
                 'status_text' => match ($c->status) {
                     'pending' => '待處理',
