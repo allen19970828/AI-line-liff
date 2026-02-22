@@ -91,20 +91,20 @@ class PrintLunchFeeNotification extends Page implements HasForms
             ->columns(2);
     }
 
-    public function preparePrint(): void
+    public function preparePrint(): ?string
     {
         if (empty($this->data['semester_id'])) {
             $this->dispatch('notify', message: '請先選擇學期');
 
-            return;
+            return null;
         }
 
         session()->flash('print_data', $this->data);
         session()->flash('print_calendar', $this->getCalendarData());
         session()->flash('print_overview', $this->getBillingOverview());
 
-        // 使用 Livewire 的 JS 去開新視窗
-        $this->dispatch('open-print-window', url: route('print.lunch-fee-notification'));
+        // 回傳路由讓前端同步跳轉
+        return route('print.lunch-fee-notification');
     }
 
     /**
