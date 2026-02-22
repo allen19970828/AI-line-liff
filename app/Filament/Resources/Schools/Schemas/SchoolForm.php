@@ -102,18 +102,18 @@ class SchoolForm
 
                                 TextInput::make('checkin_code')
                                     ->label('報到特徵碼')
-                                    ->description('系統自動生成的唯一報到代碼，不可修改。')
+                                    ->helperText('系統自動生成的唯一報到代碼，不可修改。')
                                     ->readOnly()
                                     ->prefixIcon('heroicon-m-qr-code')
                                     ->visibleOn('edit'),
 
                                 Placeholder::make('created_at')
                                     ->label('建立時間')
-                                    ->content(fn ($record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                                    ->content(fn($record): string => $record?->created_at?->diffForHumans() ?? '-'),
 
                                 Placeholder::make('updated_at')
                                     ->label('最後更新')
-                                    ->content(fn ($record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                    ->content(fn($record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                             ]),
                     ])
                     ->columnSpan(['lg' => 1]),
