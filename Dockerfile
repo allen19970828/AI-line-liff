@@ -22,6 +22,10 @@ RUN install-php-extensions @composer apcu bcmath gd intl mysqli opcache pcntl pd
 # 複製應用程式原始碼
 COPY . /var/www
 
+# 設定 Composer 環境變數以防權限與記憶體問題
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_MEMORY_LIMIT=-1
+
 # 安裝 Composer 依賴
 RUN composer install --optimize-autoloader --classmap-authoritative --no-dev
 
