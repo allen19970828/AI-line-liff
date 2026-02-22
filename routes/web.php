@@ -22,7 +22,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/complete', [\App\Http\Controllers\ProfileCompletionController::class, 'update'])->name('profile.update');
 
     // 專用列印路由：利用 Session 將計算結果渲染於純 HTML 版面
-    Route::get('/admin/print-lunch-fee-notification', function () {
+    Route::get('/print/lunch-fee-notification', function () {
         $data = session('print_data');
         $calendar = session('print_calendar');
         $overview = session('print_overview');
