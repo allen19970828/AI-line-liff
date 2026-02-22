@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserResource extends Resource
 {
@@ -40,6 +41,24 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return UsersTable::configure($table);
+    }
+
+    /**
+     * [安全] 多租戶隔離：非超管只能看到同校的使用者
+     * User Model 不能使用 BelongsToSchool Trait (會影響登入流程)，
+     * 因此在 Resource 層手動過濾。
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if ($user && ! $user->canBypassSchoolScope() && $user->school_id) {
+            $query->where('school_id', $user->school_id);
+        }
+
+        return $query;
     }
 
     public static function getRelations(): array
