@@ -46,7 +46,7 @@ class SystemSelfHealingCommand extends Command
         $this->info('檢修完成。');
         Log::channel('daily')->info('System Self-Healing completed.');
 
-        return Command::SUCCESS;
+        return 0;
     }
 
     /**

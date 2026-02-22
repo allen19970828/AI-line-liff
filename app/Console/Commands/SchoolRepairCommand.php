@@ -30,7 +30,7 @@ class SchoolRepairCommand extends Command
         if ($schools->isEmpty()) {
             $this->info('所有學校皆已有特徵碼，無需修補。');
 
-            return Command::SUCCESS;
+            return 0;
         }
 
         $this->info("發現 {$schools->count()} 所學校缺失特徵碼，開始修補...");
@@ -44,6 +44,6 @@ class SchoolRepairCommand extends Command
 
         $this->info('修補完成！');
 
-        return Command::SUCCESS;
+        return 0;
     }
 }
