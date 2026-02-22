@@ -979,30 +979,211 @@
     </header>
 
     <!-- Main App Container -->
-    <main id="app-container" class="hidden flex-1 px-4 py-6 pb-20 safe-bottom overflow-y-auto" x-data="appData()">
+        <!-- Group Management Modal (Moved inside x-data scope) -->
+        <div x-show="cancellation.showGroupManager" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
 
-        <!-- Dashboard View -->
-        <!-- Dashboard View -->
-        @include('liff.components.dashboard')
+            <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform transition-all"
+                @click.away="closeGroupManager()">
 
-        <!-- Surveys View -->
-        <!-- Surveys View -->
-        @include('liff.components.surveys')
+                <!-- Header -->
+                <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-800"
+                        x-text="cancellation.editingGroup !== null ? (cancellation.editingGroup.id ? '編輯群組' : '建立新群組') : '我的群組管理'">
+                    </h3>
+                    <button @click="closeGroupManager()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
 
-        <!-- Cancellation View -->
-        <!-- Cancellation View -->
-        @include('liff.components.cancellation')
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto p-5">
 
-        <!-- Settings View -->
-        <!-- Settings View -->
-        @include('liff.components.settings')
+                    <!-- 列表模式 -->
+                    <div x-show="cancellation.editingGroup === null" class="space-y-4">
+                        <div class="flex justify-end">
+                            <button @click="createGroup()"
+                                class="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-purple-200 active:scale-95 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                建立新群組
+                            </button>
+                        </div>
 
-        <!-- Meal Complaints View -->
-        @include('liff.components.complaints')
+                        <div class="space-y-3">
+                            <template x-for="group in cancellation.groups" :key="group.id">
+                                <div
+                                    class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h4 class="font-bold text-gray-900 text-lg" x-text="group.name"></h4>
+                                            <p class="text-sm text-gray-500 mt-1" x-text="group.description || '無描述'"></p>
+                                            <div
+                                                class="mt-2 text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-lg inline-block font-medium">
+                                                <span x-text="group.student_count"></span> 位成員
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-2" x-show="group.can_edit">
+                                            <button @click="editGroup(group)"
+                                                class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </button>
+                                            <button @click="deleteGroup(group.id)"
+                                                class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="cancellation.groups.length === 0" class="text-center py-10 text-gray-400">
+                                <p class="text-4xl mb-3">📁</p>
+                                <p>尚無群組</p>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Settlement View -->
-        @include('liff.components.settlement')
+                    <!-- 編輯/新增模式 -->
+                    <div x-show="cancellation.editingGroup !== null" class="space-y-5">
+                        <!-- 基本資料 -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">群組名稱 <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" x-model="cancellation.groupForm.name" placeholder="例如：籃球校隊"
+                                    class="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 text-base">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">描述 (選填)</label>
+                                <textarea x-model="cancellation.groupForm.description" placeholder="例如：代表學校參加縣市比賽..."
+                                    rows="2"
+                                    class="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 text-base"></textarea>
+                            </div>
+                        </div>
 
+                        <!-- 成員管理 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">群組成員</label>
+
+                            <!-- 搜尋學生 -->
+                            <div class="relative mb-3">
+                                <input type="text" x-model="cancellation.groupForm.studentSearch"
+                                    @input.debounce.300ms="searchStudentForGroupForm()" placeholder="搜尋學生加入..."
+                                    class="w-full bg-white border border-purple-200 rounded-xl px-4 py-2 pr-10 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all">
+                                <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+
+                                <!-- 搜尋結果 -->
+                                <div x-show="cancellation.groupForm.searchResults && cancellation.groupForm.searchResults.length > 0"
+                                    class="absolute left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-10">
+                                    <template x-for="student in cancellation.groupForm.searchResults" :key="student.id">
+                                        <button @click="addStudentToGroupForm(student)" type="button"
+                                            class="w-full px-4 py-2 text-left hover:bg-purple-50 text-sm border-b border-gray-50 last:border-0 flex justify-between items-center">
+                                            <span>
+                                                <span class="font-bold text-gray-800" x-text="student.name"></span>
+                                                <span class="text-xs text-gray-500 ml-1"
+                                                    x-text="student.class_name + ' · ' + student.seat_number + '號'"></span>
+                                            </span>
+                                            <span
+                                                class="text-purple-600 text-xs font-bold px-2 py-0.5 bg-purple-100 rounded-full">加入</span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- 學生列表 -->
+                            <div
+                                class="bg-slate-50 rounded-xl p-3 max-h-60 overflow-y-auto space-y-2 border border-slate-100">
+                                <template x-for="(student, index) in cancellation.groupForm.students" :key="student.id">
+                                    <div
+                                        class="flex justify-between items-center bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-100">
+                                        <div>
+                                            <p class="font-bold text-sm text-gray-800" x-text="student.name"></p>
+                                            <p class="text-xs text-gray-500"
+                                                x-text="student.class_name + ' · ' + student.seat_number + '號'"></p>
+                                        </div>
+                                        <button @click="removeStudentFromGroupForm(index)" type="button"
+                                            class="text-red-400 hover:text-red-600 p-1">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </template>
+                                <div x-show="cancellation.groupForm.students.length === 0"
+                                    class="text-center py-4 text-xs text-gray-400">
+                                    尚未加入任何成員
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="p-4 border-t border-gray-100 bg-gray-50 flex gap-3" x-show="cancellation.editingGroup !== null">
+                    <button @click="cancellation.editingGroup = null"
+                        class="flex-1 py-3 rounded-xl border border-gray-300 text-gray-600 font-bold bg-white active:scale-95 transition-all">取消</button>
+                    <button @click="saveGroup()"
+                        :disabled="!cancellation.groupForm.name || cancellation.groupForm.students.length === 0"
+                        class="flex-1 py-3 rounded-xl bg-purple-600 text-white font-bold shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all">
+                        儲存
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Summary View (Moved inside x-data scope) -->
+        <div x-show="view === 'resultSummary'" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div
+                class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
+                <!-- Header -->
+                <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-800" x-text="cancellation.result?.title"></h3>
+                    <button @click="view = 'dashboard'; cancellation.result = null"
+                        class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto p-5">
+                    <p class="text-gray-600 mb-4" x-text="cancellation.result?.message"></p>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="p-4 border-t border-gray-100 bg-gray-50">
+                    <button @click="view = 'dashboard'; cancellation.result = null"
+                        class="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium active:scale-95 transition-transform hover:bg-gray-200">
+                        返回首頁
+                    </button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Login Button (Visible if not logged in) -->
@@ -1085,211 +1266,7 @@
         </div>
     </div>
 
-    <!-- Group Management Modal -->
-    <div x-show="cancellation.showGroupManager" x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
 
-        <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform transition-all"
-            @click.away="closeGroupManager()">
-
-            <!-- Header -->
-            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="text-lg font-bold text-gray-800"
-                    x-text="cancellation.editingGroup !== null ? (cancellation.editingGroup.id ? '編輯群組' : '建立新群組') : '我的群組管理'">
-                </h3>
-                <button @click="closeGroupManager()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Content -->
-            <div class="flex-1 overflow-y-auto p-5">
-
-                <!-- 列表模式 -->
-                <div x-show="cancellation.editingGroup === null" class="space-y-4">
-                    <div class="flex justify-end">
-                        <button @click="createGroup()"
-                            class="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-purple-200 active:scale-95 flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4v16m8-8H4" />
-                            </svg>
-                            建立新群組
-                        </button>
-                    </div>
-
-                    <div class="space-y-3">
-                        <template x-for="group in cancellation.groups" :key="group.id">
-                            <div
-                                class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <h4 class="font-bold text-gray-900 text-lg" x-text="group.name"></h4>
-                                        <p class="text-sm text-gray-500 mt-1" x-text="group.description || '無描述'"></p>
-                                        <div
-                                            class="mt-2 text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-lg inline-block font-medium">
-                                            <span x-text="group.student_count"></span> 位成員
-                                        </div>
-                                    </div>
-                                    <div class="flex gap-2" x-show="group.can_edit">
-                                        <button @click="editGroup(group)"
-                                            class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                        </button>
-                                        <button @click="deleteGroup(group.id)"
-                                            class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                        <div x-show="cancellation.groups.length === 0" class="text-center py-10 text-gray-400">
-                            <p class="text-4xl mb-3">📁</p>
-                            <p>尚無群組</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 編輯/新增模式 -->
-                <div x-show="cancellation.editingGroup !== null" class="space-y-5">
-                    <!-- 基本資料 -->
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">群組名稱 <span
-                                    class="text-red-500">*</span></label>
-                            <input type="text" x-model="cancellation.groupForm.name" placeholder="例如：籃球校隊"
-                                class="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 text-base">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">描述 (選填)</label>
-                            <textarea x-model="cancellation.groupForm.description" placeholder="例如：代表學校參加縣市比賽..."
-                                rows="2"
-                                class="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3 text-base"></textarea>
-                        </div>
-                    </div>
-
-                    <!-- 成員管理 -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">群組成員</label>
-
-                        <!-- 搜尋學生 -->
-                        <div class="relative mb-3">
-                            <input type="text" x-model="cancellation.groupForm.studentSearch"
-                                @input.debounce.300ms="searchStudentForGroupForm()" placeholder="搜尋學生加入..."
-                                class="w-full bg-white border border-purple-200 rounded-xl px-4 py-2 pr-10 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all">
-                            <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-
-                            <!-- 搜尋結果 -->
-                            <div x-show="cancellation.groupForm.searchResults && cancellation.groupForm.searchResults.length > 0"
-                                class="absolute left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-10">
-                                <template x-for="student in cancellation.groupForm.searchResults" :key="student.id">
-                                    <button @click="addStudentToGroupForm(student)" type="button"
-                                        class="w-full px-4 py-2 text-left hover:bg-purple-50 text-sm border-b border-gray-50 last:border-0 flex justify-between items-center">
-                                        <span>
-                                            <span class="font-bold text-gray-800" x-text="student.name"></span>
-                                            <span class="text-xs text-gray-500 ml-1"
-                                                x-text="student.class_name + ' · ' + student.seat_number + '號'"></span>
-                                        </span>
-                                        <span
-                                            class="text-purple-600 text-xs font-bold px-2 py-0.5 bg-purple-100 rounded-full">加入</span>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-
-                        <!-- 學生列表 -->
-                        <div
-                            class="bg-slate-50 rounded-xl p-3 max-h-60 overflow-y-auto space-y-2 border border-slate-100">
-                            <template x-for="(student, index) in cancellation.groupForm.students" :key="student.id">
-                                <div
-                                    class="flex justify-between items-center bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-100">
-                                    <div>
-                                        <p class="font-bold text-sm text-gray-800" x-text="student.name"></p>
-                                        <p class="text-xs text-gray-500"
-                                            x-text="student.class_name + ' · ' + student.seat_number + '號'"></p>
-                                    </div>
-                                    <button @click="removeStudentFromGroupForm(index)" type="button"
-                                        class="text-red-400 hover:text-red-600 p-1">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </template>
-                            <div x-show="cancellation.groupForm.students.length === 0"
-                                class="text-center py-4 text-xs text-gray-400">
-                                尚未加入任何成員
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer Buttons -->
-            <div class="p-4 border-t border-gray-100 bg-gray-50 flex gap-3" x-show="cancellation.editingGroup !== null">
-                <button @click="cancellation.editingGroup = null"
-                    class="flex-1 py-3 rounded-xl border border-gray-300 text-gray-600 font-bold bg-white active:scale-95 transition-all">取消</button>
-                <button @click="saveGroup()"
-                    :disabled="!cancellation.groupForm.name || cancellation.groupForm.students.length === 0"
-                    class="flex-1 py-3 rounded-xl bg-purple-600 text-white font-bold shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all">
-                    儲存
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Result Summary View -->
-    <div x-show="view === 'resultSummary'" x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-        <div
-            class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform transition-all">
-            <!-- Header -->
-            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="text-lg font-bold text-gray-800" x-text="cancellation.result.title"></h3>
-                <button @click="view = 'dashboard'; cancellation.result = null"
-                    class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Content -->
-            <div class="flex-1 overflow-y-auto p-5">
-                <p class="text-gray-600 mb-4" x-text="cancellation.result.message"></p>
-            </div>
-
-            <!-- Footer Buttons -->
-            <div class="p-4 border-t border-gray-100 bg-gray-50">
-                <button @click="view = 'dashboard'; cancellation.result = null"
-                    class="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium active:scale-95 transition-transform hover:bg-gray-200">
-                    返回首頁
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- Global Loading -->
     <div id="global-loading" class="fixed inset-0 bg-white z-60 flex flex-col items-center justify-center">

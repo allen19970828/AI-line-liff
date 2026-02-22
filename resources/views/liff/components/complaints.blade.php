@@ -7,7 +7,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
             </button>
-            <h2 class="text-xl font-bold ml-1">問題回報</h2>
+            <h2 class="text-xl font-bold ml-1">當日用餐問題反應</h2>
         </div>
         <button x-show="!complaints.isReporting"
             @click="complaints.isReporting = true; complaints.form.classroom_id = (cancellation.classrooms[0]?.id || '')"
@@ -15,7 +15,7 @@
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            我要回報
+            我要反應
         </button>
     </div>
 
