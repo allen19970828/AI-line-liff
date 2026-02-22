@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG PHP_VERSION=8.3
+ARG PHP_VERSION=8.5
 FROM docker.io/library/php:${PHP_VERSION}-fpm
 
 # 加入環境變數，告知 Laravel 我們的環境

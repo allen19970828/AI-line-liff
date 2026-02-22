@@ -29,100 +29,129 @@ class MealCancellationController extends Controller
      * 取得可停餐對象列表
      * GET /api/cancellation/targets
      */
-    public function getTargets(Request $request)
+    public function getTargets(Request $request): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();
-        $targets = [];
-
-        // 1. 識別身分
-        $staff = $user->staff; // 使用 Phase 10 新增的關聯
-
-        if ($staff) {
-            // A. 自己 (Staff 本人)
-            // [宗師指點] 依據學期設定，決定是否允許教職員停餐
-            // daily (按日) => 不用停餐 (因為本身就是有吃才算錢，沒吃不算) -> 隱藏
-            // monthly (包月) => 需要停餐 (因為預收了整月，停餐要退費) -> 顯示
-
-            // 使用 SemesterService 取得最相關的學期 (考量寒暑假預填)
-            $relevantSemester = $this->semesterService->getMostRelevantSemester($staff->school_id);
-
-            $shouldShowStaff = true;
-            if ($relevantSemester && $relevantSemester->staff_meal_mode === \App\Enums\StaffMealMode::Daily) {
-                $shouldShowStaff = false;
-            }
-
-            if ($shouldShowStaff) {
-                $targets[] = [
-                    'id' => $staff->id,
-                    'name' => $staff->name.' (我自己)',
-                    'type' => 'staff',
-                    'avatar_url' => $user->avatar_url,
-                ];
-            }
-
-            // B. 學生 (根據權限)
-            $studentsQuery = Student::query()->active()->where('eat_lunch', true);
-
-            // 規則：如果是 Admin 或 超管，看全校；否則只看自己班級
-            if ($staff->staff_role === \App\Enums\StaffRole::Admin || $user->canBypassSchoolScope()) {
-                // Admin: 看全校 (且符合該校 scope)
-                $students = $studentsQuery->get();
-            } else {
-                // Teacher: 只看導師班級
-                $classrooms = $staff->classrooms->pluck('id');
-                if ($classrooms->isNotEmpty()) {
-                    $students = $studentsQuery->whereIn('classroom_id', $classrooms)->get();
-                } else {
-                    $students = collect();
-                }
-            }
-
-            foreach ($students as $student) {
-                // 為了前端顯示方便，標註是否為全校學生 (Admin view)
-                $targets[] = [
-                    'id' => $student->id,
-                    'name' => $student->name,
-                    'type' => 'student',
-                    'class_name' => $student->class_full_name,
-                ];
-            }
-        }
-
-        // 取得班級列表 (供前端選單使用)
-        $classrooms = [];
-        $permissions = [
-            'can_access_group' => false,
-            'can_class_activity' => false,
-            'can_cross_class' => false,
-        ];
-
-        if ($staff) {
-            $permissions = [
-                'can_access_group' => true, // 放寬給所有教職員使用
-                'can_class_activity' => true, // 放寬給所有教職員使用
-                'can_cross_class' => true, // 放寬給所有教職員使用
-            ];
-
-            $classrooms = \App\Models\Classroom::query()
-                ->when(! $user->canBypassSchoolScope(), function ($q) use ($staff) {
-                    $q->where('school_id', $staff->school_id);
-                })
-                ->active()
-                ->orderBy('sort_order')
-                ->get()
-                ->map(fn ($c) => [
-                    'id' => $c->id,
-                    'name' => $c->class_name,
-                    'class_name' => $c->class_name, // [修正] 供 complaints.blade.php 使用
-                ]);
-        }
+        $staff = $user->staff;
 
         return response()->json([
             'status' => 'success',
-            'data' => $targets,
-            'classrooms' => $classrooms,
-            'permissions' => $permissions,
+            'data' => $this->getAvailableTargets($user, $staff),
+            'classrooms' => $this->getAvailableClassrooms($user, $staff),
+            'permissions' => $this->getLiffPermissions($staff),
         ]);
+    }
+
+    /**
+     * 取得可停餐的目標對象 (自己與所屬學生)
+     */
+    protected function getAvailableTargets(\App\Models\User $user, ?Staff $staff): array
+    {
+        if (! $staff) {
+            return [];
+        }
+
+        $targets = [];
+
+        // A. 自己 (Staff 本人)
+        if ($this->shouldShowStaffTarget($staff)) {
+            $targets[] = [
+                'id' => $staff->id,
+                'name' => $staff->name.' (我自己)',
+                'type' => 'staff',
+                'avatar_url' => $user->avatar_url,
+            ];
+        }
+
+        // B. 學生 (根據權限)
+        $students = $this->getAuthorizedStudents($user, $staff);
+        foreach ($students as $student) {
+            $targets[] = [
+                'id' => $student->id,
+                'name' => $student->name,
+                'type' => 'student',
+                'class_name' => $student->class_full_name,
+            ];
+        }
+
+        return $targets;
+    }
+
+    /**
+     * 判斷是否應顯示教職員本人為停餐目標
+     */
+    protected function shouldShowStaffTarget(Staff $staff): bool
+    {
+        $relevantSemester = $this->semesterService->getMostRelevantSemester($staff->school_id);
+
+        if ($relevantSemester && $relevantSemester->staff_meal_mode === \App\Enums\StaffMealMode::Daily) {
+            // 按日計費模式通常不需手動停餐 (沒吃就不算錢)
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 取得該教職員有權限操作的學生列表
+     */
+    protected function getAuthorizedStudents(\App\Models\User $user, Staff $staff): \Illuminate\Support\Collection
+    {
+        $query = Student::query()->active()->where('eat_lunch', true);
+
+        if ($staff->staff_role === \App\Enums\StaffRole::Admin || $user->canBypassSchoolScope()) {
+            return $query->get();
+        }
+
+        $classroomIds = $staff->classrooms->pluck('id');
+        if ($classroomIds->isEmpty()) {
+            return collect();
+        }
+
+        return $query->whereIn('classroom_id', $classroomIds)->get();
+    }
+
+    /**
+     * 取得可選班級列表
+     */
+    protected function getAvailableClassrooms(\App\Models\User $user, ?Staff $staff): array
+    {
+        if (! $staff) {
+            return [];
+        }
+
+        return \App\Models\Classroom::query()
+            ->active()
+            ->when(! $user->canBypassSchoolScope(), fn ($q) => $q->where('school_id', $staff->school_id))
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn (\App\Models\Classroom $c) => [
+                'id' => $c->id,
+                'name' => $c->class_name,
+                'class_name' => $c->class_name,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * 取得 LIFF 頁面權限設定
+     */
+    protected function getLiffPermissions(?Staff $staff): array
+    {
+        if (! $staff) {
+            return [
+                'can_access_group' => false,
+                'can_class_activity' => false,
+                'can_cross_class' => false,
+            ];
+        }
+
+        // 目前放寬給所有教職員使用
+        return [
+            'can_access_group' => true,
+            'can_class_activity' => true,
+            'can_cross_class' => true,
+        ];
     }
 
     /**

@@ -162,7 +162,7 @@ class SurveyResource extends Resource
                         $replica->title = '[副本] '.$replica->title;
                         $replica->status = 'draft';
                     })
-                    ->afterReplicaSaved(function (Survey $old, Survey $replica): void {
+                    ->after(function (Survey $old, Survey $replica): void {
                         // 複製題目 (Deep Clone)
                         foreach ($old->questions as $question) {
                             $newQuestion = $question->replicate();
