@@ -136,7 +136,7 @@ class SettlementController extends Controller
             ->where('year_month', $yearMonth)
             ->first();
 
-        $isLocked = $settlement && $settlement->status !== 'pending';
+        $isLocked = $settlement && $settlement->status === 'paid';
 
         // 餐費單價
         $mealPrice = $semester ? $semester->meal_price : 0;
@@ -188,8 +188,8 @@ class SettlementController extends Controller
             ->where('year_month', $yearMonth)
             ->first();
 
-        if ($settlement && $settlement->status !== 'pending') {
-            return response()->json(['message' => '本月已結算，無法修改'], 422);
+        if ($settlement && $settlement->status === 'paid') {
+            return response()->json(['message' => '本月已結清，無法修改'], 422);
         }
 
         // 查找學期

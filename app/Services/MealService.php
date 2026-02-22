@@ -44,6 +44,10 @@ class MealService
             : $semester->min_stop_days;
 
         if ($workdays < $minDays) {
+            // 當選取的日期完全沒有供餐日時，給予更明確的提示
+            if ($workdays === 0) {
+                throw new \Exception('所選日期皆為非供餐日（假日或週末），請選擇其他日期');
+            }
             throw new \Exception("停餐天數(供餐日)至少需達 {$minDays} 天，目前僅 {$workdays} 天");
         }
 

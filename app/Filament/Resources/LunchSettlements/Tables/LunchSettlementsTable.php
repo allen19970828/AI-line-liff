@@ -36,21 +36,13 @@ class LunchSettlementsTable
                     ->label('應繳金額')
                     ->money('TWD')
                     ->sortable(),
-                TextColumn::make('status')
+                \Filament\Tables\Columns\SelectColumn::make('status')
                     ->label('狀態')
-                    ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->options([
                         'draft' => '草稿',
                         'sent' => '已通知',
                         'paid' => '已結清',
-                        default => $state,
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'draft' => 'gray',
-                        'sent' => 'warning',
-                        'paid' => 'success',
-                        default => 'gray',
-                    }),
+                    ]),
             ])
             ->defaultSort('year_month', 'desc')
             ->filters([
