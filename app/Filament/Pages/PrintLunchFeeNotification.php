@@ -10,8 +10,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 
 class PrintLunchFeeNotification extends Page implements HasForms
@@ -49,10 +49,10 @@ class PrintLunchFeeNotification extends Page implements HasForms
         ]);
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('semester_id')
                     ->label('選擇計算基準學期')
                     ->options(Semester::all()->pluck('name', 'id'))
