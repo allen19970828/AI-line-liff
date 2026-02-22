@@ -23,6 +23,9 @@ Route::middleware(['auth'])->group(function () {
 
     // 專用列印路由：利用 Session 將計算結果渲染於純 HTML 版面
     Route::get('/print/lunch-fee-notification', function () {
+        // 先暫存，避免畫面重新整理後資料直接不見
+        session()->reflash();
+
         $data = session('print_data');
         $calendar = session('print_calendar');
         $overview = session('print_overview');
