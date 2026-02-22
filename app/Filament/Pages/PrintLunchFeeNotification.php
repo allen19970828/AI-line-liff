@@ -22,7 +22,7 @@ class PrintLunchFeeNotification extends Page
 
     protected static ?string $title = '午餐費通知單列印';
 
-    protected static string $view = 'filament.pages.print-lunch-fee-notification';
+    protected string $view = 'filament.pages.print-lunch-fee-notification';
 
     public ?array $data = [];
 
