@@ -112,7 +112,8 @@ class MealCancellationController extends Controller
                 ->get()
                 ->map(fn ($c) => [
                     'id' => $c->id,
-                    'name' => $c->class_name, // 客製化：只顯示班級名稱 (因 user 反映 full_name 會重複顯示年級)
+                    'name' => $c->class_name,
+                    'class_name' => $c->class_name, // [修正] 供 complaints.blade.php 使用
                 ]);
         }
 

@@ -29,7 +29,7 @@
                         d="M12 4v1m6 11h2m-6 0h-2v4h2v-4zM6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
             </div>
-            <h3 class="font-bold text-gray-800">用餐簽到</h3>
+            <h3 class="font-bold text-gray-800">用餐登記</h3>
             <p class="text-xs text-gray-400 mt-1">掃碼快速報到</p>
         </div>
 

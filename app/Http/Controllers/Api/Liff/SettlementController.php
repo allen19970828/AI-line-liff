@@ -204,6 +204,9 @@ class SettlementController extends Controller
         $removed = 0;
 
         // 新增補登
+        $skippedDates = [];
+        $backfillCutoffTime = '12:40'; // 當日用餐截止時間
+
         foreach ($request->input('add_dates', []) as $dateStr) {
             $date = Carbon::parse($dateStr);
 
@@ -217,6 +220,13 @@ class SettlementController extends Controller
                 continue;
             }
 
+            // 當天日期：必須過用餐截止時間才能補登
+            if ($date->isToday() && now()->format('H:i') < $backfillCutoffTime) {
+                $skippedDates[] = $dateStr.'（未過 '.$backfillCutoffTime.'）';
+
+                continue;
+            }
+
             // 不能是未來日期
             if ($date->gt(now()->endOfDay())) {
                 continue;
@@ -227,18 +237,22 @@ class SettlementController extends Controller
                 ->whereDate('checked_at', $date->toDateString())
                 ->exists();
 
-            if (! $exists) {
-                StaffCheckIn::create([
-                    'school_id' => $staff->school_id,
-                    'user_id' => $user->id,
-                    'staff_id' => $staff->id,
-                    'checkin_code' => 'backfill',
-                    'checked_at' => $date->setTime(12, 0, 0),
-                    'ip_address' => $request->ip(),
-                    'user_agent' => 'LIFF-Backfill',
-                ]);
-                $added++;
+            if ($exists) {
+                $skippedDates[] = $dateStr.'（已登記）';
+
+                continue;
             }
+
+            StaffCheckIn::create([
+                'school_id' => $staff->school_id,
+                'user_id' => $user->id,
+                'staff_id' => $staff->id,
+                'checkin_code' => 'backfill',
+                'checked_at' => $date->setTime(12, 0, 0),
+                'ip_address' => $request->ip(),
+                'user_agent' => 'LIFF-Backfill',
+            ]);
+            $added++;
         }
 
         // 刪除補登 (只刪除 backfill 類型的紀錄，保護 QR 簽到的資料)
@@ -267,9 +281,14 @@ class SettlementController extends Controller
         $daysCount = $uniqueDates->count();
         $mealPrice = $semester ? $semester->meal_price : 0;
 
+        $msg = "補登完成：新增 {$added} 天，刪除 {$removed} 天";
+        if (count($skippedDates) > 0) {
+            $msg .= '。跳過：'.implode('、', $skippedDates);
+        }
+
         return response()->json([
             'status' => 'success',
-            'message' => "補登完成：新增 {$added} 天，刪除 {$removed} 天",
+            'message' => $msg,
             'days_count' => $daysCount,
             'amount' => $daysCount * $mealPrice,
             'checked_dates' => $uniqueDates->toArray(),

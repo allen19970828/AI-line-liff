@@ -35,7 +35,29 @@ class MealService
         $start = Carbon::parse($startDate);
         $now = now();
 
-        // 1. 檢查最少停餐「供餐日」天數 (Minimum Workdays)
+        // 1. 檢查停餐區間是否包含非供餐日 → 整筆拒絕
+        $end = Carbon::parse($endDate);
+
+        // 預先載入 exceptions 避免 N+1
+        if (! $semester->relationLoaded('exceptions')) {
+            $semester->load('exceptions');
+        }
+
+        $nonServingDays = [];
+        $checkDate = $start->copy();
+        while ($checkDate->lte($end)) {
+            if ($semester->isDayOff($checkDate)) {
+                $nonServingDays[] = $checkDate->toDateString();
+            }
+            $checkDate->addDay();
+        }
+
+        if (count($nonServingDays) > 0) {
+            $daysList = implode('、', $nonServingDays);
+            throw new \Exception("停餐日期中包含非供餐日：{$daysList}，請重新選擇");
+        }
+
+        // 2. 檢查最少停餐「供餐日」天數 (Minimum Workdays)
         $workdays = $semester->countWorkdays($startDate, $endDate);
 
         // 區分個人與團體的最少天數限制
@@ -44,7 +66,6 @@ class MealService
             : $semester->min_stop_days;
 
         if ($workdays < $minDays) {
-            // 當選取的日期完全沒有供餐日時，給予更明確的提示
             if ($workdays === 0) {
                 throw new \Exception('所選日期皆為非供餐日（假日或週末），請選擇其他日期');
             }
