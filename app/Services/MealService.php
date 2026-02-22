@@ -179,21 +179,30 @@ class MealService
                 continue;
             }
 
-            // 對學生廢除「部分用餐」過濾
+            // 對學生檢查用餐資格
             $classroomId = null;
             if ($type === \App\Models\Student::class) {
                 $student = $type::find($id);
+                $isSingleTarget = count($ids) === 1;
 
                 // A. 完全不吃午餐
                 if (! $student?->eat_lunch) {
+                    if ($isSingleTarget) {
+                        throw new \Exception('該學生未登記用餐，不需停餐');
+                    }
+
                     continue;
                 }
 
-                // B. 部分用餐：若 meal_days 有設定且　申請的日期範圍裡沒有任何一天屬於學生的用餐日，則跳過
+                // B. 部分用餐：若 meal_days 有設定且申請的日期範圍裡沒有任何一天屬於學生的用餐日，則跳過
                 if (! empty($student->meal_days)) {
                     $mealDaysIso = array_map(fn ($d) => $d === 7 ? 7 : $d, $student->meal_days);
                     $hasOverlap = ! empty(array_intersect($requestedDaysOfWeek, $mealDaysIso));
                     if (! $hasOverlap) {
+                        if ($isSingleTarget) {
+                            throw new \Exception('該日學生沒有用餐，不需停餐');
+                        }
+
                         continue;
                     }
                 }
