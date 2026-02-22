@@ -34,22 +34,28 @@ PHP 8.3+ 與 Filament v4 對於繼承的靜態屬性有嚴格的型別一致性�
 
 ### ✅ 修正方式
 
-靜態屬性 `$navigationIcon`、`$navigationGroup` 等必須與基底類別 `Filament\Resources\Resource` 的宣告 **完全匹配**。
+靜態屬性 `$navigationIcon`、`$navigationGroup` 以及一般屬性 `$view` 必須與基底類別（`Resource` 或 `Page`）的宣告 **完全匹配**。
 
 ```php
 use BackedEnum;
 use UnitEnum;
 
-// 1. 圖標：必須包含 BackedEnum
+// 1. 圖標：必須包含 BackedEnum (靜態)
 protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
 
-// 2. 群組名稱：必須包含 UnitEnum (或是補上 \UnitEnum 全域命名空間)
+// 2. 群組名稱：必須包含 UnitEnum (靜態)
 protected static string | \UnitEnum | null $navigationGroup = '校園午餐管理';
 
-// 3. 標籤與排序：相對寬鬆，但建議加上型別標註
+// 3. 視圖路徑：在 Page 中是非靜態 (Non-static)
+protected string $view = 'filament.pages.custom-page';
+
+// 4. 標籤與排序：相對寬鬆，但建議加上型別標註
 protected static ?string $navigationLabel = '學生資料管理';
 protected static ?int $navigationSort = 1;
 ```
+
+> [!CAUTION]
+> **Page 類別中的 `$view` 絕不可加 `static`**。如果你看到 `Type of ...::$view must be non-static`，請立刻移除其 `static` 修飾詞。
 
 > [!IMPORTANT]
 > 若沒有在檔案開頭 `use UnitEnum;`，則必須寫成 `string|\UnitEnum|null`，否則會報「類別找不到」或型別不匹配。
