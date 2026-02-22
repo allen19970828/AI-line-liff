@@ -12,8 +12,7 @@ class MealService
 {
     public function __construct(
         protected SemesterService $semesterService
-    ) {
-    }
+    ) {}
 
     /**
      * 驗證停餐申請是否符合學期規則
@@ -34,7 +33,6 @@ class MealService
         ?string $scopeType = null
     ): void {
         $start = Carbon::parse($startDate);
-        $end = Carbon::parse($endDate);
         $now = now();
 
         // 1. 檢查最少停餐「供餐日」天數 (Minimum Workdays)
@@ -58,15 +56,15 @@ class MealService
             default => $semester->personal_stop_days,
         };
 
-        // 3. 計算距離申請日的實際天數
-        $actualDays = $now->copy()->startOfDay()->diffInDays($start->copy()->startOfDay(), false);
+        // 3. 計算從「今天」到「申請首日」之間的「供餐日」數 (排除週末、國定假日、停課日)
+        $servingDaysAhead = $semester->countServingDaysFromNow($start);
 
-        if ($actualDays < $leadDays) {
-            throw new \Exception("此假別需提前 {$leadDays} 天申請，目前僅提前 {$actualDays} 天");
+        if ($servingDaysAhead < $leadDays) {
+            throw new \Exception("此假別需提前 {$leadDays} 個供餐日申請，目前僅提前 {$servingDaysAhead} 個供餐日");
         }
 
         // 4. 若剛好達到提前天數邊界，檢查是否已過截單時間
-        if ($actualDays === $leadDays) {
+        if ($servingDaysAhead === $leadDays) {
             $cutOffTime = Carbon::parse($semester->stop_cut_off_time);
             $currentTime = $now->format('H:i:s');
 
@@ -105,23 +103,20 @@ class MealService
         $end = Carbon::parse($endDate);
 
         // 自動查詢學期（若未提供）
-        if (!$semester) {
-            // 從第一個對象取得學校 ID
+        if (! $semester) {
             $firstTarget = $type::find($ids[0]);
-            if (!$firstTarget) {
+            if (! $firstTarget) {
                 throw new \Exception('找不到申請對象');
             }
             $schoolId = $firstTarget->school_id;
 
-            // 優先以「申請日期」尋找對應學期
             $semester = $this->semesterService->getSemesterByDate($startDate, $schoolId);
 
-            if (!$semester) {
-                // 如果申請日期還沒到學期開始，則抓「最相關」的學期作對帳預測
+            if (! $semester) {
                 $semester = $this->semesterService->getMostRelevantSemester($schoolId);
             }
 
-            if (!$semester) {
+            if (! $semester) {
                 throw new \Exception('找不到該時段對應的啟用學期設定');
             }
         }
@@ -139,6 +134,14 @@ class MealService
         $status = $semester->auto_approve_mode ? CancelRequestStatus::Approved : CancelRequestStatus::Pending;
         $approvedAt = $semester->auto_approve_mode ? now() : null;
 
+        // 建立情境中包含的星期幾組合 (Carbon: 1=週一 ... 7=週日)
+        $requestedDaysOfWeek = [];
+        $current = $start->copy();
+        while ($current->lte($end)) {
+            $requestedDaysOfWeek[] = $current->dayOfWeekIso; // 1=Mon, 7=Sun
+            $current->addDay();
+        }
+
         foreach ($ids as $id) {
             // 檢查是否重複
             $exists = MealCancelRequest::where('cancellable_id', $id)
@@ -151,12 +154,26 @@ class MealService
                 continue;
             }
 
-            // 嘗試解析班級 ID (僅針對學生)
+            // 對學生廢除「部分用餐」過濾
             $classroomId = null;
             if ($type === \App\Models\Student::class) {
-                // 如果已有載入關聯可直接用，否則查 DB
                 $student = $type::find($id);
-                $classroomId = $student?->classroom_id;
+
+                // A. 完全不吃午餐
+                if (! $student?->eat_lunch) {
+                    continue;
+                }
+
+                // B. 部分用餐：若 meal_days 有設定且　申請的日期範圍裡沒有任何一天屬於學生的用餐日，則跳過
+                if (! empty($student->meal_days)) {
+                    $mealDaysIso = array_map(fn ($d) => $d === 7 ? 7 : $d, $student->meal_days);
+                    $hasOverlap = ! empty(array_intersect($requestedDaysOfWeek, $mealDaysIso));
+                    if (! $hasOverlap) {
+                        continue;
+                    }
+                }
+
+                $classroomId = $student->classroom_id;
             }
 
             MealCancelRequest::create([
@@ -166,7 +183,7 @@ class MealService
                 'end_date' => $end->toDateString(),
                 'leave_type' => $leaveTypeValue,
                 'scope_type' => $scopeType,
-                'classroom_id' => $classroomId, // [新增] 寫入班級 ID
+                'classroom_id' => $classroomId,
                 'reason' => $reason,
                 'status' => $status,
                 'approved_at' => $approvedAt,
@@ -203,22 +220,31 @@ class MealService
         $semester = $this->semesterService->getSemesterByDate($startDate, $classroom->school_id)
             ?? $this->semesterService->getMostRelevantSemester($classroom->school_id);
 
-        if (!$semester) {
+        if (! $semester) {
             throw new \Exception('找不到適用的學期設定');
         }
 
         // 執行業務規則驗證（公假規則 & 班級活動範圍）
         $this->validateCancellationRules($semester, $startDate, $endDate, CancelLeaveType::Administrative, 'class_activity');
 
-        // 取得該班所有「在學」且「有搭伙」的學生
-        // [宗師指點] 沒搭伙的學生本來就沒飯吃，不需要停餐，故需過濾 is_meal_user
+        // 取得該班所有「在學」且「有搭伙」且「有吃午餐」的學生
+        // (部分用餐過濾則在建立時檢查 meal_days 與日期範圍交集)
         $students = $classroom->students()
             ->active()
             ->where('is_meal_user', true)
+            ->where('eat_lunch', true)
             ->get();
 
         if ($students->isEmpty()) {
-            throw new \Exception('該班級目前沒有「在學且有搭伙」的學生，無需建立停餐申請');
+            throw new \Exception('該班級目前沒有「在學且有搭伙且吃午餐」的學生，無需建立停餐申請');
+        }
+
+        // 建立情境涵蓋的星期幾組合 (ISO: 1=Mon, 7=Sun)
+        $requestedDaysOfWeek = [];
+        $current = $start->copy();
+        while ($current->lte($end)) {
+            $requestedDaysOfWeek[] = $current->dayOfWeekIso;
+            $current->addDay();
         }
 
         // 決定初始狀態 (考慮自動核准模式)
@@ -227,6 +253,15 @@ class MealService
 
         $count = 0;
         foreach ($students as $student) {
+            // 部分用餐過濾：若 meal_days 有設定，該學生必須在申請範圍內有至少一天屬於用餐日
+            if (! empty($student->meal_days)) {
+                $mealDaysIso = array_map(fn ($d) => $d === 7 ? 7 : $d, $student->meal_days);
+                $hasOverlap = ! empty(array_intersect($requestedDaysOfWeek, $mealDaysIso));
+                if (! $hasOverlap) {
+                    continue;
+                }
+            }
+
             // 檢查是否重複
             $exists = MealCancelRequest::where('cancellable_id', $student->id)
                 ->where('cancellable_type', \App\Models\Student::class)
@@ -287,12 +322,20 @@ class MealService
         $semester = $this->semesterService->getSemesterByDate($startDate, $schoolId)
             ?? $this->semesterService->getMostRelevantSemester($schoolId);
 
-        if (!$semester) {
+        if (! $semester) {
             throw new \Exception('找不到適用的學期設定');
         }
 
         // 執行業務規則驗證（公假規則 & 團體範圍）
         $this->validateCancellationRules($semester, $startDate, $endDate, CancelLeaveType::Administrative, 'group');
+
+        // 建立情境涵蓋的星期幾 (ISO: 1=Mon, 7=Sun)
+        $requestedDaysOfWeek = [];
+        $current = $start->copy();
+        while ($current->lte($end)) {
+            $requestedDaysOfWeek[] = $current->dayOfWeekIso;
+            $current->addDay();
+        }
 
         // 決定初始狀態 (考慮自動核准模式)
         $status = $semester->auto_approve_mode ? CancelRequestStatus::Approved : CancelRequestStatus::Pending;
@@ -300,6 +343,21 @@ class MealService
 
         $count = 0;
         foreach ($studentIds as $studentId) {
+            $student = \App\Models\Student::find($studentId);
+
+            // A. 完全不吃午餐 => 跳過
+            if (! $student?->eat_lunch) {
+                continue;
+            }
+
+            // B. 部分用餐：若 meal_days 與申請範圍沒有交集 => 跳過
+            if (! empty($student->meal_days)) {
+                $hasOverlap = ! empty(array_intersect($requestedDaysOfWeek, $student->meal_days));
+                if (! $hasOverlap) {
+                    continue;
+                }
+            }
+
             // 檢查是否重複
             $exists = MealCancelRequest::where('cancellable_id', $studentId)
                 ->where('cancellable_type', \App\Models\Student::class)
@@ -311,10 +369,6 @@ class MealService
                 continue;
             }
 
-            // 解析該學生的班級 ID
-            $student = \App\Models\Student::find($studentId);
-            $classroomId = $student?->classroom_id;
-
             MealCancelRequest::create([
                 'cancellable_id' => $studentId,
                 'cancellable_type' => \App\Models\Student::class,
@@ -322,7 +376,7 @@ class MealService
                 'end_date' => $end->toDateString(),
                 'leave_type' => CancelLeaveType::Administrative->value,
                 'scope_type' => 'group',
-                'classroom_id' => $classroomId, // [新增] 寫入班級 ID
+                'classroom_id' => $student->classroom_id,
                 'requested_by' => $requestedBy->id,
                 'reason' => $reason ?? '跨班團體停餐',
                 'status' => $status,
@@ -369,7 +423,7 @@ class MealService
                 'MenuType' => 1,
             ]);
 
-            if (!$metadataResponse->successful() || empty($metadataResponse->json('data'))) {
+            if (! $metadataResponse->successful() || empty($metadataResponse->json('data'))) {
                 return null;
             }
 
@@ -381,7 +435,7 @@ class MealService
                 'BatchDataId' => $batchDataId,
             ]);
 
-            if (!$dishResponse->successful()) {
+            if (! $dishResponse->successful()) {
                 return null;
             }
 
@@ -393,7 +447,7 @@ class MealService
                 'source_url' => "https://fatraceschool.k12ea.gov.tw/frontend/search.html?school={$schoolCode}&period={$date}",
             ];
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Fatrace API Error: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Fatrace API Error: '.$e->getMessage());
 
             return null;
         }

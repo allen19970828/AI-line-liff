@@ -23,8 +23,7 @@ class MealCancellationController extends Controller
     public function __construct(
         protected MealService $mealService,
         protected SemesterService $semesterService
-    ) {
-    }
+    ) {}
 
     /**
      * 取得可停餐對象列表
@@ -55,14 +54,14 @@ class MealCancellationController extends Controller
             if ($shouldShowStaff) {
                 $targets[] = [
                     'id' => $staff->id,
-                    'name' => $staff->name . ' (我自己)',
+                    'name' => $staff->name.' (我自己)',
                     'type' => 'staff',
                     'avatar_url' => $user->avatar_url,
                 ];
             }
 
             // B. 學生 (根據權限)
-            $studentsQuery = Student::query()->active();
+            $studentsQuery = Student::query()->active()->where('eat_lunch', true);
 
             // 規則：如果是 Admin 或 超管，看全校；否則只看自己班級
             if ($staff->staff_role === \App\Enums\StaffRole::Admin || $user->canBypassSchoolScope()) {
@@ -105,13 +104,13 @@ class MealCancellationController extends Controller
             ];
 
             $classrooms = \App\Models\Classroom::query()
-                ->when(!$user->canBypassSchoolScope(), function ($q) use ($staff) {
+                ->when(! $user->canBypassSchoolScope(), function ($q) use ($staff) {
                     $q->where('school_id', $staff->school_id);
                 })
                 ->active()
                 ->orderBy('sort_order')
                 ->get()
-                ->map(fn($c) => [
+                ->map(fn ($c) => [
                     'id' => $c->id,
                     'name' => $c->class_name, // 客製化：只顯示班級名稱 (因 user 反映 full_name 會重複顯示年級)
                 ]);
@@ -183,7 +182,7 @@ class MealCancellationController extends Controller
                 }
             }
 
-            if (!$isAllowed) {
+            if (! $isAllowed) {
                 return response()->json(['status' => 'error', 'message' => '無權限操作此對象'], 403);
             }
 
@@ -241,7 +240,7 @@ class MealCancellationController extends Controller
         $user = $request->user();
         $staff = $user->staff;
 
-        if (!$staff) {
+        if (! $staff) {
             return response()->json(['status' => 'error', 'message' => '找不到您的教職員資料'], 404);
         }
 
@@ -250,13 +249,13 @@ class MealCancellationController extends Controller
             // 1. 先找班級 (確保該班級屬於該校)
             $classroom = \App\Models\Classroom::query()
                 ->where('id', $request->classroom_id)
-                ->when(!$user->canBypassSchoolScope(), function ($q) use ($staff) {
+                ->when(! $user->canBypassSchoolScope(), function ($q) use ($staff) {
                     $q->where('school_id', $staff->school_id);
                 })
                 ->active()
                 ->first();
 
-            if (!$classroom) {
+            if (! $classroom) {
                 return response()->json(['status' => 'error', 'message' => '找不到該班級'], 404);
             }
 
@@ -266,7 +265,7 @@ class MealCancellationController extends Controller
                 ->active()
                 ->first();
 
-            if (!$student) {
+            if (! $student) {
                 return response()->json(['status' => 'error', 'message' => '找不到該座號的學生'], 404);
             }
 
@@ -282,7 +281,7 @@ class MealCancellationController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => '查詢失敗: ' . $e->getMessage()], 500);
+            return response()->json(['status' => 'error', 'message' => '查詢失敗: '.$e->getMessage()], 500);
         }
     }
 
@@ -311,7 +310,7 @@ class MealCancellationController extends Controller
             $user = $request->user();
             $staff = $user->staff;
 
-            if (!$staff) {
+            if (! $staff) {
                 return response()->json(['status' => 'error', 'message' => '找不到您的教職員資料'], 404);
             }
 
@@ -324,7 +323,7 @@ class MealCancellationController extends Controller
             $isHomeRoomTeacher = $staff->classrooms->contains('id', $classroom->id);
             $isAdmin = $staff->staff_role === \App\Enums\StaffRole::Admin || $user->canBypassSchoolScope();
 
-            if (!$isHomeRoomTeacher && !$isAdmin) {
+            if (! $isHomeRoomTeacher && ! $isAdmin) {
                 return response()->json([
                     'status' => 'error',
                     'message' => '您不是該班級導師，且不具備行政權限，無法申請班級活動停餐',
@@ -382,7 +381,7 @@ class MealCancellationController extends Controller
             $user = $request->user();
             $staff = $user->staff;
 
-            if (!$staff) {
+            if (! $staff) {
                 return response()->json(['status' => 'error', 'message' => '找不到您的教職員資料'], 404);
             }
 
@@ -390,7 +389,7 @@ class MealCancellationController extends Controller
             // 原本僅限 Admin，現放寬給所有老師使用
             // $canGroupCancel = $staff->staff_role === \App\Enums\StaffRole::Admin || $user->canBypassSchoolScope();
 
-            if (!$staff) {
+            if (! $staff) {
                 return response()->json([
                     'status' => 'error',
                     'message' => '找不到您的教職員資料，無法執行操作',
@@ -446,10 +445,11 @@ class MealCancellationController extends Controller
             ]);
         }
 
-        // 基礎查詢：只查詢該校的活躍學生
+        // 基礎查詢：只查詢該校的活躍、有吃午餐的學生
         $query = Student::where('school_id', $user->school_id)
             ->active()
-            ->with('classroom'); // 修正：移除 :id,name，因為 Classroom 沒有 name 欄位
+            ->where('eat_lunch', true)
+            ->with('classroom');
 
         // ... (permission checks omit for brevity) ...
 
@@ -457,7 +457,7 @@ class MealCancellationController extends Controller
         if ($classroomId) {
             // 模式 A: 依班級篩選
             $query->where('classroom_id', $classroomId);
-            if (!empty($keyword)) {
+            if (! empty($keyword)) {
                 $query->where('name', 'like', "%{$keyword}%");
             }
         } else {
@@ -529,7 +529,7 @@ class MealCancellationController extends Controller
             foreach ($exceptions as $ex) {
                 /** @var SemesterException $ex */
                 // is_meal_day = false 代表不用餐
-                if (!$ex->is_meal_day) {
+                if (! $ex->is_meal_day) {
                     /** @var \Carbon\Carbon $date */
                     $date = $ex->date;
                     $holidays[$date->format('Y-m-d')] = $ex->description ?? '校園活動';

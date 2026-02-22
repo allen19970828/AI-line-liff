@@ -200,16 +200,24 @@ class Semester extends Model
     {
         $date = Carbon::parse($date);
 
-        // 1. 先查「例外表」 (需 Eager Load: ->load('exceptions'))
+        // 1. 先查「學期例外表」(需 Eager Load: ->load('exceptions'))
         $exception = $this->exceptions->firstWhere('date', $date->toDateString());
 
         if ($exception) {
-            // 0:放假, 2:活動不供餐, 3:天災 => 都是 DayOff
-            // 1:補課 => 不是 DayOff (要吃飯)
+            // type 1 = 補課供餐，其他 (0放假/2活動/3天災) => DayOff
             return $exception->type !== 1;
         }
 
-        // 2. 若無例外，則看「常規」 (預設週末放假)
+        // 2. 查詢國定假日 (非補班日算 DayOff)
+        $isNationalHoliday = NationalHoliday::where('date', $date->toDateString())
+            ->where('type', '!=', NationalHoliday::TYPE_MAKEUP)
+            ->exists();
+
+        if ($isNationalHoliday) {
+            return true;
+        }
+
+        // 3. 若無例外，預設週末放假
         return $date->isWeekend();
     }
 
@@ -234,6 +242,31 @@ class Semester extends Model
         }
 
         while ($current->lte($end)) {
+            if (! $this->isDayOff($current)) {
+                $count++;
+            }
+            $current->addDay();
+        }
+
+        return $count;
+    }
+
+    /**
+     * 計算從「今天起」到目標日期之間有幾個供餐日 (不含今天，含目標日)
+     * 用於驗證提前申請天數：提前天數 = 需「跳過」的供餐日數量
+     */
+    public function countServingDaysFromNow(Carbon $targetDate): int
+    {
+        // 預先載入 exceptions 避免 N+1
+        if (! $this->relationLoaded('exceptions')) {
+            $this->load('exceptions');
+        }
+
+        $count = 0;
+        $current = now()->startOfDay()->addDay(); // 從「明天」開始數
+        $target = $targetDate->copy()->startOfDay();
+
+        while ($current->lte($target)) {
             if (! $this->isDayOff($current)) {
                 $count++;
             }
