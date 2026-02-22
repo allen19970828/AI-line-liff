@@ -66,7 +66,7 @@ class MealService
      * @throws \Exception 如果不符合規則
      */
     public function validateCancellationRules(
-        \App\Models\Semester $semester,
+        Semester $semester,
         string $startDate,
         string $endDate,
         mixed $leaveType,
@@ -149,7 +149,7 @@ class MealService
      * @param  string  $type  多型類別 (App\Models\Student 或 App\Models\Staff)
      * @param  string  $origin  來源
      * @param  string|null  $reason  理由
-     * @param  \App\Models\Semester|null  $semester  學期 (若為 null，自動查詢)
+     * @param  Semester|null  $semester  學期 (若為 null，自動查詢)
      * @param  string|null  $scopeType  申請範圍類型
      */
     public function batchCreateRequests(
@@ -160,7 +160,7 @@ class MealService
         string $type,
         string $origin = 'liff',
         ?string $reason = null,
-        ?\App\Models\Semester $semester = null,
+        ?Semester $semester = null,
         ?string $scopeType = null
     ): int {
         $count = 0;

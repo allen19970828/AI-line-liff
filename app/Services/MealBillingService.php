@@ -83,7 +83,9 @@ class MealBillingService
      */
     public function generateCalendarMatrix(Semester $semester): array
     {
+        /** @var \Carbon\Carbon $start */
         $start = $semester->start_date->copy()->startOfMonth();
+        /** @var \Carbon\Carbon $end */
         $end = $semester->end_date->copy()->endOfMonth();
 
         $matrix = [];
@@ -113,8 +115,8 @@ class MealBillingService
         $endOfMonth = $month->copy()->endOfMonth();
 
         // 從該月第一天的那一週的第一天開始 (週日 = 0)
-        $date = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
-        $endOfCalendar = $endOfMonth->copy()->endOfWeek(Carbon::SATURDAY);
+        $date = $startOfMonth->copy()->startOfWeek(\Carbon\CarbonInterface::SUNDAY);
+        $endOfCalendar = $endOfMonth->copy()->endOfWeek(\Carbon\CarbonInterface::SATURDAY);
 
         while ($date->lte($endOfCalendar)) {
             $week = [];

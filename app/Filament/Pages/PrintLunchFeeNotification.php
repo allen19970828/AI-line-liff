@@ -8,6 +8,7 @@ use App\Services\MealBillingService;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
@@ -142,6 +143,7 @@ class PrintLunchFeeNotification extends Page
         $start = $semester->start_date;
         $end = $semester->end_date;
 
+        /** @var \Carbon\Carbon $start */
         // 找到第一期結束日 (11/30) 與第二期開始日 (12/01)
         $p1End = $start->copy()->month(11)->endOfMonth();
         $p2Start = $start->copy()->month(12)->startOfMonth();
