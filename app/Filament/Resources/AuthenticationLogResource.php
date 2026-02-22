@@ -3,8 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AuthenticationLogResource\Pages;
-use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,10 +15,35 @@ class AuthenticationLogResource extends Resource
     protected static ?string $model = AuthenticationLog::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-finger-print';
+
     protected static ?string $navigationLabel = '登入稽核日誌';
+
     protected static ?string $modelLabel = '登入紀錄';
+
     protected static ?string $pluralModelLabel = '登入紀錄';
+
     protected static string|\UnitEnum|null $navigationGroup = '系統管理';
+
+    /**
+     * [安全] 多租戶隔離：透過 User 關聯間接過濾
+     * AuthenticationLog 沒有 school_id，但可透過 authenticatable (User) 關聯過濾
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $user = auth()->user();
+
+        if ($user && ! $user->canBypassSchoolScope() && $user->school_id) {
+            $query->whereHasMorph(
+                'authenticatable',
+                [\App\Models\User::class],
+                fn (Builder $q) => $q->where('school_id', $user->school_id)
+            );
+        }
+
+        return $query;
+    }
 
     public static function table(Table $table): Table
     {
@@ -31,7 +54,7 @@ class AuthenticationLogResource extends Resource
                     ->label('使用者')
                     ->searchable()
                     ->sortable()
-                    ->description(fn($record) => $record->authenticatable?->email),
+                    ->description(fn ($record) => $record->authenticatable?->email),
 
                 // 2. IP 位址
                 Tables\Columns\TextColumn::make('ip_address')
@@ -44,7 +67,7 @@ class AuthenticationLogResource extends Resource
                     ->label('裝置資訊')
                     ->searchable()
                     ->limit(30)
-                    ->tooltip(fn($state) => $state),
+                    ->tooltip(fn ($state) => $state),
 
                 // 4. 登入時間
                 Tables\Columns\TextColumn::make('login_at')
