@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('app:notify-lunch-secretary-summary')->dailyAt('16:01');
+Schedule::command('app:self-healing')->everyTenMinutes();
