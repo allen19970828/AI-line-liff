@@ -36,53 +36,53 @@ RUN if [ -f package.json ]; then npm install && npm run build; fi
 RUN php artisan optimize
 
 # 配置 Nginx (將 /storage 硬連接回 /data/public，確保重啟不消失)
-RUN cat > /etc/nginx/sites-enabled/default << 'EOF'
+COPY <<'EOF' /etc/nginx/sites-enabled/default
 server {
-listen 8080;
-root /var/www/public;
+    listen 8080;
+    root /var/www/public;
 
-add_header X-Frame-Options "SAMEORIGIN";
-add_header X-Content-Type-Options "nosniff";
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
 
-index index.php index.html;
-charset utf-8;
+    index index.php index.html;
+    charset utf-8;
 
-location = /favicon.ico { access_log off; log_not_found off; }
-location = /robots.txt  { access_log off; log_not_found off; }
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
 
-error_page 404 /index.php;
+    error_page 404 /index.php;
 
-# 處理 PHP 請求
-location ~ \.php$ {
-try_files $uri =404;
-fastcgi_split_path_info ^(.+\.php)(/.*)$;
-fastcgi_pass 127.0.0.1:9000;
-fastcgi_index index.php;
-include fastcgi_params;
-fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-fastcgi_param DOCUMENT_ROOT $realpath_root;
-fastcgi_param PATH_INFO $fastcgi_path_info;
-fastcgi_hide_header X-Powered-By;
-}
+    # 處理 PHP 請求
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.*)$;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $realpath_root;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        fastcgi_hide_header X-Powered-By;
+    }
 
-# [關鍵修復]：儲存空間路由直接 alias 到持久化磁碟 /data/public
-location /storage {
-alias /data/public;
-expires 30d;
-add_header Cache-Control "public, immutable";
-}
+    # [關鍵修復]：儲存空間路由直接 alias 到持久化磁碟 /data/public
+    location /storage {
+        alias /data/public;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
 
-location / {
-try_files $uri $uri/ /index.php$is_args$args;
-gzip_static on;
-}
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+        gzip_static on;
+    }
 
-location ~ /\.(?!well-known).* {
-deny all;
-}
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
 
-error_log /dev/stderr;
-access_log /dev/stderr;
+    error_log /dev/stderr;
+    access_log /dev/stderr;
 }
 EOF
 
