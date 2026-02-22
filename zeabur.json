@@ -1,6 +1,0 @@
-{
-  "build": {
-    "command": "composer install --no-dev --optimize-autoloader && npm install && npm run build"
-  },
-  "pre_start_command": "mkdir -p /data/public && chmod -R 777 /data/public && rm -f public/storage && ln -sf /data/public public/storage && php artisan migrate --force && php artisan app:self-healing"
-}

@@ -32,9 +32,6 @@ RUN composer install --optimize-autoloader --classmap-authoritative --no-dev
 # 安裝 npm 依賴和構建前端資源 (如果有)
 RUN if [ -f package.json ]; then npm install && npm run build; fi
 
-# Laravel 優化 (將設定檔等快取起來)
-RUN php artisan optimize
-
 # 配置 Nginx (將 /storage 硬連接回 /data/public，確保重啟不消失)
 COPY <<'EOF' /etc/nginx/sites-enabled/default
 server {
