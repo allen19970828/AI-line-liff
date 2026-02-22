@@ -12,9 +12,9 @@ class SchoolSeeder extends Seeder
         // 這裡預留給匯入真實學校資料的邏輯
         // 目前先建立一個示範用的高雄市學校
         School::updateOrCreate(
-            ['code' => 'KHH001'],
+            ['code' => 'TEST001'],
             [
-                'name' => '系統測試國小',
+                'name' => '系統示範國小',
                 'city' => '高雄市',
                 'district' => '前鎮區',
                 'address' => '一心一路 1 號',

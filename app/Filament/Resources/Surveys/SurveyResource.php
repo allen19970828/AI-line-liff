@@ -7,6 +7,7 @@ use App\Filament\Resources\Surveys\Pages\CreateSurvey;
 use App\Filament\Resources\Surveys\Pages\EditSurvey;
 use App\Filament\Resources\Surveys\Pages\ListSurveys;
 use App\Filament\Resources\Surveys\RelationManagers\QuestionsRelationManager;
+use App\Filament\Resources\Surveys\RelationManagers\ResponsesRelationManager;
 use App\Models\Survey;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -167,6 +168,7 @@ class SurveyResource extends Resource
     {
         return [
             QuestionsRelationManager::class,
+            ResponsesRelationManager::class,
         ];
     }
 

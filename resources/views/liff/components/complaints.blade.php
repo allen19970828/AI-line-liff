@@ -82,13 +82,13 @@
 
         <button @click="submitComplaint($event.target)"
             class="w-full bg-amber-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-amber-100 active:scale-95 flex justify-center items-center gap-2">
-            確認送出回報
+            確認送出反應
         </button>
     </div>
 
     <!-- History List -->
     <div x-show="!complaints.isReporting" class="space-y-4">
-        <h3 class="font-bold text-gray-500 text-sm px-1">回報紀錄</h3>
+        <h3 class="font-bold text-gray-500 text-sm px-1">反應紀錄</h3>
 
         <div class="space-y-3">
             <template x-for="item in complaints.history" :key="item.id">

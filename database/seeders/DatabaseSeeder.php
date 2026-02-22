@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         $demoSchool = School::updateOrCreate(
             ['code' => 'TEST001'],
             [
-                'name' => '深矩陣實驗小學',
+                'name' => '系統測試小學',
                 'city' => '高雄市',
                 'district' => '前鎮區',
                 'address' => '雲端之上',
