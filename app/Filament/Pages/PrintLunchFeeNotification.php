@@ -91,6 +91,22 @@ class PrintLunchFeeNotification extends Page implements HasForms
             ->columns(2);
     }
 
+    public function preparePrint(): void
+    {
+        if (empty($this->data['semester_id'])) {
+            $this->dispatch('notify', message: '請先選擇學期');
+
+            return;
+        }
+
+        session()->flash('print_data', $this->data);
+        session()->flash('print_calendar', $this->getCalendarData());
+        session()->flash('print_overview', $this->getBillingOverview());
+
+        // 使用 Livewire 的 JS 去開新視窗
+        $this->dispatch('open-print-window', url: route('print.lunch-fee-notification'));
+    }
+
     /**
      * 取得日曆資料 (用於 Blade)
      */
