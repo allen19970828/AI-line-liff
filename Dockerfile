@@ -87,9 +87,12 @@ EOF
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# 設定權限讓 www-data 可以讀寫
+# 建立必要的目錄並設定權限
+RUN mkdir -p /var/www/bootstrap/cache && chmod -R 755 /var/www/bootstrap/cache
+RUN mkdir -p /var/www/storage && chmod -R 755 /var/www/storage
+
+# 設定權限讓 www-data 可以讀寫 (排除外部掛載的 /data/public)
 RUN chown -R www-data:www-data /var/www
-RUN chown -R www-data:www-data /data/public || true
 
 # Zeabur 期望的對外 Port
 EXPOSE 8080
