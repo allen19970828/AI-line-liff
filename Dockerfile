@@ -10,7 +10,7 @@ WORKDIR /var/www
 # 安裝依賴 (包含 nginx, 資料庫工具等)
 RUN set -eux \
     && apt update \
-    && apt install -y cron curl gettext git grep libicu-dev nginx pkg-config unzip \
+    && apt install -y cron curl gettext git grep libicu-dev nginx pkg-config unzip nodejs npm \
     && rm -rf /var/lib/apt/lists/*
 
 # 安裝 PHP 擴展 (透過官方推薦的腳本)
