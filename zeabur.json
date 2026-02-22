@@ -2,5 +2,5 @@
   "build": {
     "command": "composer install --no-dev --optimize-autoloader && npm install && npm run build"
   },
-  "pre_start_command": "php artisan migrate --force && php artisan storage:link --force"
+  "pre_start_command": "mkdir -p /data/public && php artisan migrate --force && php artisan storage:link --force"
 }
