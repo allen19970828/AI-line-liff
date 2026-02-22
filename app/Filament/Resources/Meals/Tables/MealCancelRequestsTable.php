@@ -68,28 +68,17 @@ class MealCancelRequestsTable
                             return 'N/A';
                         }
 
-                        $days = $semester->countWorkdays($record->start_date, $record->end_date);
+                        // 統一使用 MealService 計算有效停餐天數
+                        $mealDays = ($record->cancellable_type === \App\Models\Student::class)
+                            ? $record->cancellable?->meal_days
+                            : null;
 
-                        // [修正] 若為學生且有設定 meal_days，則只計算實際用餐日
-                        if (
-                            $record->cancellable_type === \App\Models\Student::class
-                            && ! empty($record->cancellable?->meal_days)
-                        ) {
-                            $mealDays = $record->cancellable->meal_days; // e.g. [1,2,4,5]
-                            $effectiveDays = 0;
-                            $current = \Carbon\Carbon::parse($record->start_date)->copy();
-                            $end = \Carbon\Carbon::parse($record->end_date);
-
-                            while ($current->lte($end)) {
-                                // 必須是：(1) 工作日 (2) 在學生的用餐日清單中
-                                if (! $semester->isDayOff($current) && in_array($current->dayOfWeekIso, $mealDays)) {
-                                    $effectiveDays++;
-                                }
-                                $current->addDay();
-                            }
-
-                            $days = $effectiveDays;
-                        }
+                        $days = \App\Services\MealService::calculateEffectiveCancellationDays(
+                            $semester,
+                            $record->start_date,
+                            $record->end_date,
+                            $mealDays
+                        );
 
                         return "{$days} 天";
                     })

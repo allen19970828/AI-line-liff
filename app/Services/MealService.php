@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\Meals\CancelLeaveType;
 use App\Enums\Meals\CancelRequestStatus;
 use App\Models\MealCancelRequest;
+use App\Models\Semester;
 use App\Models\User;
 use Carbon\Carbon;
 
@@ -13,6 +14,45 @@ class MealService
     public function __construct(
         protected SemesterService $semesterService
     ) {}
+
+    /**
+     * 計算停餐的實際有效天數 (統一入口)
+     *
+     * 同時考慮：
+     * 1. 學期的非供餐日（週末、國定假日、停課日）
+     * 2. 學生的個人用餐日 (meal_days)
+     *
+     * @param  Semester  $semester  對應學期
+     * @param  string  $startDate  開始日期
+     * @param  string  $endDate  結束日期
+     * @param  array|null  $mealDays  學生的用餐日 (e.g. [1,2,4,5])，null = 全勤
+     */
+    public static function calculateEffectiveCancellationDays(
+        Semester $semester,
+        string $startDate,
+        string $endDate,
+        ?array $mealDays = null,
+    ): int {
+        // 無 meal_days 限制 → 使用原有 countWorkdays (全勤學生/教職員)
+        if (empty($mealDays)) {
+            return $semester->countWorkdays($startDate, $endDate);
+        }
+
+        // 有 meal_days 限制 → 逐日檢查
+        $current = Carbon::parse($startDate)->startOfDay();
+        $end = Carbon::parse($endDate)->startOfDay();
+        $effectiveDays = 0;
+
+        while ($current->lte($end)) {
+            // 必須同時滿足：(1) 供餐日 (2) 在學生的用餐日清單中
+            if (! $semester->isDayOff($current) && in_array($current->dayOfWeekIso, $mealDays)) {
+                $effectiveDays++;
+            }
+            $current->addDay();
+        }
+
+        return $effectiveDays;
+    }
 
     /**
      * 驗證停餐申請是否符合學期規則
