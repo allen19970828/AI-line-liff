@@ -95,6 +95,7 @@ class SystemSelfHealingCommand extends Command
     {
         $criticalKeys = [
             'STORAGE_PATH_PUBLIC' => '用於持久化存儲圖片',
+            'STORAGE_URL' => '用於外部訪問圖片的路徑 (如 /storage 或 https://...)',
             'SUPER_ADMIN_EMAILS' => '用於管理員上帝視角權限',
             'LINE_CLIENT_ID' => '用於 LINE 登入',
         ];
