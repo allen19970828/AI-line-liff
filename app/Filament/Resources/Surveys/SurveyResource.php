@@ -9,9 +9,6 @@ use App\Filament\Resources\Surveys\Pages\ListSurveys;
 use App\Filament\Resources\Surveys\RelationManagers\QuestionsRelationManager;
 use App\Filament\Resources\Surveys\RelationManagers\ResponsesRelationManager;
 use App\Models\Survey;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -155,11 +152,28 @@ class SurveyResource extends Resource
                 //
             ])
             ->actions([
-                EditAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\ReplicateAction::make()
+                    ->label('複製問卷')
+                    ->modalHeading('複製問卷')
+                    ->modalDescription('這將會複製此問卷的所有設定與題目內容。')
+                    ->modalSubmitActionLabel('確認複製')
+                    ->beforeReplicaSaved(function (Survey $replica): void {
+                        $replica->title = '[副本] '.$replica->title;
+                        $replica->status = 'draft';
+                    })
+                    ->afterReplicaSaved(function (Survey $old, Survey $replica): void {
+                        // 複製題目 (Deep Clone)
+                        foreach ($old->questions as $question) {
+                            $newQuestion = $question->replicate();
+                            $newQuestion->survey_id = $replica->id;
+                            $newQuestion->save();
+                        }
+                    }),
             ])
             ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
