@@ -979,6 +979,14 @@
     </header>
 
     <!-- Main App Container -->
+    <main id="app-container" class="hidden flex-1 px-4 py-6 pb-20 safe-bottom overflow-y-auto" x-data="appData()">
+        @include('liff.components.dashboard')
+        @include('liff.components.surveys')
+        @include('liff.components.cancellation')
+        @include('liff.components.settings')
+        @include('liff.components.complaints')
+        @include('liff.components.settlement')
+
         <!-- Group Management Modal (Moved inside x-data scope) -->
         <div x-show="cancellation.showGroupManager" x-cloak
             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
@@ -1025,7 +1033,8 @@
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <h4 class="font-bold text-gray-900 text-lg" x-text="group.name"></h4>
-                                            <p class="text-sm text-gray-500 mt-1" x-text="group.description || '無描述'"></p>
+                                            <p class="text-sm text-gray-500 mt-1" x-text="group.description || '無描述'">
+                                            </p>
                                             <div
                                                 class="mt-2 text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-lg inline-block font-medium">
                                                 <span x-text="group.student_count"></span> 位成員
@@ -1034,15 +1043,19 @@
                                         <div class="flex gap-2" x-show="group.can_edit">
                                             <button @click="editGroup(group)"
                                                 class="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
                                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
                                             </button>
                                             <button @click="deleteGroup(group.id)"
                                                 class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
                                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
@@ -1138,7 +1151,8 @@
                 </div>
 
                 <!-- Footer Buttons -->
-                <div class="p-4 border-t border-gray-100 bg-gray-50 flex gap-3" x-show="cancellation.editingGroup !== null">
+                <div class="p-4 border-t border-gray-100 bg-gray-50 flex gap-3"
+                    x-show="cancellation.editingGroup !== null">
                     <button @click="cancellation.editingGroup = null"
                         class="flex-1 py-3 rounded-xl border border-gray-300 text-gray-600 font-bold bg-white active:scale-95 transition-all">取消</button>
                     <button @click="saveGroup()"
