@@ -87,12 +87,13 @@ class AdminPanelProvider extends PanelProvider
                     ->enableTwoFactorAuthentication(),
                 AutoLogoutPlugin::make(),
                 FilamentAuthenticationLogPlugin::make(),
-                FilamentLaravelLogPlugin::make()
-                    ->authorize(fn () => auth()->user()?->hasRole('super_admin'))
-                    ->navigationGroup('系統管理')
-                    ->navigationLabel('系統日誌')
-                    ->navigationIcon('heroicon-o-document-text')
-                    ->navigationSort(100),
+                // [暫停] 檔案型日誌在 Zeabur 容器重啟後會消失，改用資料庫型的 AuthenticationLog 與 ActivityLog
+                // FilamentLaravelLogPlugin::make()
+                //     ->authorize(fn () => auth()->user()?->hasRole('super_admin'))
+                //     ->navigationGroup('系統管理')
+                //     ->navigationLabel('系統日誌')
+                //     ->navigationIcon('heroicon-o-document-text')
+                //     ->navigationSort(100),
             ])
             ->authMiddleware([
                 Authenticate::class,
