@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG PHP_VERSION=8.5
+ARG PHP_VERSION=8.4
 FROM docker.io/library/php:${PHP_VERSION}-fpm
 
 # 加入環境變數，告知 Laravel 我們的環境
@@ -16,8 +16,8 @@ RUN set -eux \
 # 安裝 PHP 擴展 (透過官方推薦的腳本)
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 RUN chmod +x /usr/local/bin/install-php-extensions && sync
-# 確保包含 redis 與 pdo_pgsql (PostgreSQL 驅動)
-RUN install-php-extensions @composer apcu bcmath gd intl mysqli opcache pcntl pdo_mysql pdo_pgsql sysvsem zip redis
+# 確保包含 redis, pgsql 與 pdo_pgsql (PostgreSQL 驅動)
+RUN install-php-extensions @composer apcu bcmath gd intl mysqli opcache pcntl pdo_mysql pgsql pdo_pgsql sysvsem zip redis
 
 # 複製應用程式原始碼
 COPY . /var/www
