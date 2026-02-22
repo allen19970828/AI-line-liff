@@ -18,7 +18,7 @@ class PrintLunchFeeNotification extends Page
 
     protected static ?string $navigationLabel = '午餐費通知單列印';
 
-    protected static ?string $navigationGroup = '報表管理';
+    protected static string|\UnitEnum|null $navigationGroup = '報表管理';
 
     protected static ?string $title = '午餐費通知單列印';
 
