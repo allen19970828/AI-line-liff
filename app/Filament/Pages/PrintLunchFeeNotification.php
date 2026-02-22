@@ -93,6 +93,9 @@ class PrintLunchFeeNotification extends Page implements HasForms
 
     public function preparePrint(): ?string
     {
+        // 確保抓取到表單最新的狀態
+        $this->data = $this->form->getState();
+
         if (empty($this->data['semester_id'])) {
             $this->dispatch('notify', message: '請先選擇學期');
 
@@ -103,8 +106,8 @@ class PrintLunchFeeNotification extends Page implements HasForms
         session()->flash('print_calendar', $this->getCalendarData());
         session()->flash('print_overview', $this->getBillingOverview());
 
-        // 回傳路由讓前端同步跳轉
-        return route('print.lunch-fee-notification');
+        // 回傳相對路徑讓前端同步跳轉，避免 HTTP/HTTPS 反向代理問題
+        return route('print.lunch-fee-notification', [], false);
     }
 
     /**
