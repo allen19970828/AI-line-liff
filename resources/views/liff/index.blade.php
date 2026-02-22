@@ -901,7 +901,7 @@
                 async resign() {
                     if (confirm('確定要從目前學校離職嗎？\n此動作將使您的帳號狀態變為「離職」，且無法再查看學校資訊。')) {
                         try {
-                            await axios.post('/api/unbind');
+                            await axios.post('/api/unbind', { confirm: true });
                             alert('已離職並解除綁定');
                             location.reload();
                         } catch (e) {

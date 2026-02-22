@@ -133,6 +133,25 @@ class ImportSchools extends Command
         // --- 資料清洗 End ---
 
         $total = count($data);
+
+        // [安全強化] 資料完整性檢查
+        if ($total === 0) {
+            $this->error('⚠️ 外部資料為空！可能是資料來源異常，已中止匯入以保護現有資料。');
+
+            return;
+        }
+
+        // 檢查現有資料量，若差異超過 50% 則發出警告
+        $existingCount = \App\Models\School::count();
+        if ($existingCount > 0 && abs($total - $existingCount) / $existingCount > 0.5) {
+            $this->warn("⚠️ 警告：新資料 ({$total} 筆) 與現有資料 ({$existingCount} 筆) 差異超過 50%，請人工確認。");
+            if (! $this->confirm('確定要繼續匯入嗎？')) {
+                $this->info('已取消匯入。');
+
+                return;
+            }
+        }
+
         $this->line("取得 {$total} 筆資料，開始匯入...");
 
         // 建立進度條

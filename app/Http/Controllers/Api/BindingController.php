@@ -113,6 +113,13 @@ class BindingController extends Controller
      */
     public function unbind(Request $request)
     {
+        $request->validate([
+            'confirm' => 'required|boolean|accepted',
+        ], [
+            'confirm.required' => '請確認您要解除綁定。',
+            'confirm.accepted' => '請確認您要解除綁定。',
+        ]);
+
         $user = $request->user();
 
         try {

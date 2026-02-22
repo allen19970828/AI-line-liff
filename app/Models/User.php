@@ -69,21 +69,40 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     /**
      * 判定是否為「上帝視角」(Super Admin)，可以無視學校隔離
+     *
+     * 三層判定機制：
+     * 1. 環境變數 SUPER_ADMIN_EMAILS (維修後門)
+     * 2. 資料庫 super_admin 角色 (Filament Shield)
      */
     public function canBypassSchoolScope(): bool
     {
-        // 方案一：如果你有 email 是特定值的上帝
-        if (in_array($this->email, ['admin@example.com', 'admin@deepmatrix.com'])) {
+        // 第一層：環境變數維修後門
+        $superAdminEmails = config('app.super_admin_emails', []);
+        if ($this->email && in_array($this->email, $superAdminEmails, true)) {
             return true;
         }
 
-        // 方案二：如果你使用了 Filament Shield (spatie/laravel-permission)
-        // 可以檢查是否有 super_admin 角色
+        // 第二層：資料庫角色 (spatie/laravel-permission)
         if (method_exists($this, 'hasRole')) {
             return $this->hasRole('super_admin');
         }
 
-        // 預設：沒有國境之南，就沒有上帝
+        return false;
+    }
+
+    /**
+     * 判定是否為「校級管理員」，僅限校內管理權限，不具備跨校能力
+     */
+    public function isSchoolAdmin(): bool
+    {
+        if ($this->canBypassSchoolScope()) {
+            return true;
+        }
+
+        if (method_exists($this, 'hasRole')) {
+            return $this->hasRole('school_admin');
+        }
+
         return false;
     }
 

@@ -71,11 +71,11 @@ class ListCancellationTool implements Tool
         $output = "【{$date} 停餐名單】\n(共 {$requests->count()} 筆)\n\n";
 
         foreach ($grouped as $className => $classRequests) {
-            $output .= "🏫 {$className} ({$classRequests->count()}人):\n";
+            $output .= '🏫 '.strip_tags($className)." ({$classRequests->count()}人):\n";
 
             // 取得人名列表
             $names = $classRequests->map(function ($req) {
-                $name = $req->cancellable?->name ?? '未知';
+                $name = strip_tags($req->cancellable?->name ?? '未知');
                 $seat = '';
                 if ($req->cancellable_type === \App\Models\Student::class && $req->cancellable?->seat_number) {
                     $seat = "({$req->cancellable->seat_number}號)";

@@ -56,12 +56,12 @@ class GetStudentInfoTool implements Tool
         // 3. 格式化回傳
         $output = "【學生資訊查詢結果】\n\n";
         foreach ($students as $student) {
-            $output .= "👤 姓名：{$student->name}\n";
-            $output .= "🏫 班級：{$student->class_full_name}\n";
+            $output .= '👤 姓名：'.strip_tags($student->name)."\n";
+            $output .= '🏫 班級：'.strip_tags($student->class_full_name)."\n";
             if ($student->seat_number) {
                 $output .= "🔢 座號：{$student->seat_number}\n";
             }
-            $output .= "🆔 學號：{$student->student_code}\n";
+            $output .= '🆔 學號：'.strip_tags($student->student_code ?? '')."\n";
             $output .= "📊 狀態：{$student->status->label()}\n";
             $output .= '🍱 午餐：'.($student->is_meal_user ? ($student->eat_lunch ? '用餐中' : '不訂中餐') : '非午餐戶')."\n";
             $output .= "--------------------\n";
