@@ -47,7 +47,7 @@ class SyncNationalHolidays extends Command
                     // 根據 description 判斷是「放假」還是「補班」
                     // 這裡需要人工智慧一點的判斷，或者來源有欄位標示
                     'type' => $this->guessType($item['description'] ?? ''),
-                    'name' => $item['description'] ?? '國定假日',
+                    'name' => strip_tags($item['description'] ?? '國定假日'),
                     'year' => $date->year, // 這裡手動填，或依賴 Model 的 boot
                     'created_at' => now(),
                     'updated_at' => now(),

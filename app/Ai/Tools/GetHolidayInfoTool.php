@@ -114,7 +114,6 @@ class GetHolidayInfoTool implements Tool
             Log::error('GetHolidayInfoTool Error: '.$e->getMessage(), [
                 'date' => $request->string('date'),
                 'user_id' => auth()->id(),
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return '系統查詢假日資訊時發生暫時性錯誤，請稍後再試。';

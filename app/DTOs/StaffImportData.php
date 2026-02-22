@@ -22,8 +22,8 @@ class StaffImportData
 
     public static function fromRow(array $row): self
     {
-        // 1. 姓名 (唯一嚴格檢查)
-        $name = trim(Arr::get($row, '姓名') ?? Arr::get($row, 'name') ?? '');
+        // 1. 姓名 (唯一嚴格檢查, 加上 strip_tags 防 XSS)
+        $name = trim(strip_tags(Arr::get($row, '姓名') ?? Arr::get($row, 'name') ?? ''));
         if (empty($name)) {
             throw new \Exception('Row data missing name: '.json_encode($row));
         }
@@ -79,10 +79,10 @@ class StaffImportData
         }
 
         return new self(
-            lunch_code: Arr::get($row, '卡號') ?? Arr::get($row, '編號'),
+            lunch_code: strip_tags(Arr::get($row, '卡號') ?? Arr::get($row, '編號') ?? ''),
             name: $name,
             stage: $stage,
-            job_title: Arr::get($row, '職稱'),
+            job_title: strip_tags(Arr::get($row, '職稱') ?? ''),
             staff_role: $staffRole,
             dietary_type: $dietaryType,
             is_meal_user: $isMealUser,

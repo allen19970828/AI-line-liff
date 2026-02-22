@@ -109,7 +109,7 @@ class LineBotController extends Controller
                 $replyText = (string) $response;
 
             } catch (\Throwable $e) {
-                Log::error('AI Agent 嚴重錯誤', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(), 'line_user' => $lineUserId]);
+                Log::error('AI Agent 嚴重錯誤', ['error' => $e->getMessage(), 'line_user' => $lineUserId]);
                 $replyText = '小秘目前忙碌中，請稍後再試 🔧';
             }
             // 6. 回覆訊息 (包含 Quick Replies)
@@ -209,15 +209,22 @@ class LineBotController extends Controller
      * [安全結界] 遞迴清除 Flex Message JSON 中所有字串值
      * 防止 AI 工具產生的恶意内容透過 Flex Message 注入到使用者的 LINE 畫面。
      */
-    private function sanitizeFlexData(mixed $data): mixed
+    private function sanitizeFlexData(mixed $data, ?string $parentKey = null): mixed
     {
         if (is_string($data)) {
-            return strip_tags($data);
+            $cleaned = strip_tags($data);
+
+            // [安全強化] 若欄位是 uri，強制只允許 http/https 協定，防止 javascript: 注入
+            if ($parentKey === 'uri' && ! preg_match('/^https?:\/\//i', $cleaned)) {
+                return 'https://blocked-malicious-url';
+            }
+
+            return $cleaned;
         }
 
         if (is_array($data)) {
             foreach ($data as $key => $value) {
-                $data[$key] = $this->sanitizeFlexData($value);
+                $data[$key] = $this->sanitizeFlexData($value, is_string($key) ? $key : null);
             }
         }
 

@@ -97,7 +97,7 @@ class AuthController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('LIFF Login Exception', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::error('LIFF Login Exception', ['error' => $e->getMessage()]);
 
             return response()->json(['message' => '登入失敗，請稍後再試。'], 500);
         }

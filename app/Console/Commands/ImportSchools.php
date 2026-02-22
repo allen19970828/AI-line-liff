@@ -165,11 +165,11 @@ class ImportSchools extends Command
             $upsertData = [];
 
             foreach ($chunk as $row) {
-                // 清洗縣市名稱 (移除 [01] 這種前綴)
-                $city = preg_replace('/^\[\d+\]/', '', $row['縣市名稱'] ?? '');
+                // 清洗縣市名稱 (移除 [01] 這種前綴) 並防 XSS
+                $city = strip_tags(preg_replace('/^\[\d+\]/', '', $row['縣市名稱'] ?? ''));
 
-                // 清洗地址
-                $rawAddress = $row['地址'] ?? '';
+                // 清洗地址 並防 XSS
+                $rawAddress = strip_tags($row['地址'] ?? '');
                 $cleanAddress = preg_replace('/^\[\d+\]/', '', $rawAddress);
 
                 // 提取行政區 (District) 邏輯
@@ -185,14 +185,14 @@ class ImportSchools extends Command
 
                 // 準備寫入資料
                 $upsertData[] = [
-                    'code' => $row['代碼'], // Unique Key
-                    'name' => $row['學校名稱'],
+                    'code' => strip_tags($row['代碼'] ?? ''), // Unique Key
+                    'name' => strip_tags($row['學校名稱'] ?? ''),
                     'tax_id' => null, // API 無此欄位，留空
                     'city' => $city,
                     'district' => $district,
                     'address' => $cleanAddress,
-                    'phone' => $row['電話'] ?? null,
-                    'website' => $row['網址'] ?? null,
+                    'phone' => strip_tags($row['電話'] ?? ''),
+                    'website' => strip_tags($row['網址'] ?? ''),
                     'is_active' => true, // 匯入的學校預設啟用
 
                     // 時間戳記 (PostgreSQL 嚴格要求)

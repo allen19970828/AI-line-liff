@@ -76,8 +76,10 @@ class SystemSelfHealingCommand extends Command
 
             try {
                 if ($isZeabur) {
-                    // Zeabur 環境使用 ln -s
-                    exec("ln -sf {$target} {$publicStorage}");
+                    // Zeabur 環境使用 PHP 原生 symlink，消除 exec() 高風險指令的安全疑慮
+                    if (! symlink($target, $publicStorage)) {
+                        throw new \Exception('無法建立軟連結 (symlink failed)');
+                    }
                 } else {
                     Artisan::call('storage:link');
                 }

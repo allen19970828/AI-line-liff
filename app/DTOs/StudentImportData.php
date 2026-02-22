@@ -22,39 +22,39 @@ class StudentImportData
 
     public static function fromRow(array $row): self
     {
-        // [宗師金牌] 容錯處理：支援「姓名」與「姓名 (必填)」兩種格式
-        $name = trim(
+        // [宗師金牌] 容錯處理：支援「姓名」與「姓名 (必填)」兩種格式，並加入 strip_tags 防 XSS
+        $name = trim(strip_tags(
             $row['姓名']
             ?? $row['姓名 (必填)']
             ?? $row['name']
             ?? ''
-        );
+        ));
 
-        $code = trim(
+        $code = trim(strip_tags(
             $row['學號']
             ?? $row['學號 (必填)']
             ?? $row['student_code']
             ?? ''
-        );
+        ));
 
         if (empty($name) || empty($code)) {
             throw new \Exception('姓名與學號為必填欄位');
         }
 
         // 2. 班級與座號
-        $className = trim(
+        $className = trim(strip_tags(
             $row['班級']
             ?? $row['班級 (必填)']
             ?? $row['class']
             ?? ''
-        );
+        ));
 
-        $seatNumber = trim(
+        $seatNumber = trim(strip_tags(
             $row['座號']
             ?? $row['座號 (必填)']
             ?? $row['seat']
             ?? ''
-        );
+        ));
 
         // 3. 智慧判斷學制 (Stage)
         // [宗師金牌] 修正邏輯：

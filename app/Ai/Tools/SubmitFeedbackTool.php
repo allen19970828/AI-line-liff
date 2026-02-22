@@ -48,7 +48,8 @@ class SubmitFeedbackTool implements Tool
         try {
             MealComplaint::create([
                 'school_id' => $user->school_id,
-                'classroom_id' => $user->staff->classroom_id, // 若有帶班則自動連結
+                // [修正] 明確處理無班級歸屬的教職員 (例如行政人員、廚工)
+                'classroom_id' => $user->staff->classroom_id ?? null,
                 'staff_id' => $user->staff->id,
                 'occurred_at' => now()->toDateString(),
                 'content' => $content,

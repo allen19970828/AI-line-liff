@@ -35,77 +35,77 @@ class BindingController extends Controller
 
         // 2. Update User & Link/Create Staff
         try {
-            $user->school_id = $school->id;
-            $user->save();
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($user, $school, $realName, $staffRole) {
+                $user->school_id = $school->id;
+                $user->save();
 
-            // [修正] 同步更新 LineAccount 的 school_id，否則會因為 Global Scope 在後台消失
-            if ($user->lineAccount) {
-                // Must explicitly save the related model
-                $user->lineAccount->school_id = $school->id;
-                $user->lineAccount->save();
-            }
+                // [修正] 同步更新 LineAccount 的 school_id，否則會因為 Global Scope 在後台消失
+                if ($user->lineAccount) {
+                    $user->lineAccount->school_id = $school->id;
+                    $user->lineAccount->save();
+                }
 
-            // [New] Auto-Link or Create Staff
-            $staff = \App\Models\Staff::where('school_id', $school->id)
-                ->where('name', $realName)
-                ->get();
+                // [New] Auto-Link or Create Staff (加鎖防併發)
+                $staff = \App\Models\Staff::where('school_id', $school->id)
+                    ->where('name', $realName)
+                    ->lockForUpdate()
+                    ->get();
 
-            // [安全強化] 防止重名誤領
-            if ($staff->count() > 1) {
-                return response()->json([
-                    'message' => "找到 {$staff->count()} 位同名教職員「{$realName}」，無法自動連結。請聯絡管理員協助手動分配。",
-                ], 409);
-            }
-
-            $staff = $staff->first();
-
-            if ($staff) {
-                // [安全強化] 檢查显護是否已被其他用戶佔用
-                if ($staff->user_id && $staff->user_id !== $user->id) {
+                // [安全強化] 防止重名誤領
+                if ($staff->count() > 1) {
                     return response()->json([
-                        'message' => "教職員「{$realName}」的帳曶已被其他使用者連結，請聯絡管理員處理。",
+                        'message' => "找到 {$staff->count()} 位同名教職員「{$realName}」，無法自動連結。請聯絡管理員協助手動分配。",
                     ], 409);
                 }
-                // [已存在且可用] 連結到用戶如果尚未連結
-                if (! $staff->user_id) {
-                    $staff->user_id = $user->id;
-                    // 重新激活如果曾經離職再歸來
-                    $staff->is_active = true;
-                    $staff->save();
-                    Log::info("Binding User {$user->id} to existing Staff {$staff->id}");
+
+                $staff = $staff->first();
+
+                if ($staff) {
+                    // [安全強化] 檢查帳號是否已被其他用戶佔用
+                    if ($staff->user_id && $staff->user_id !== $user->id) {
+                        return response()->json([
+                            'message' => "教職員「{$realName}」的帳號已被其他使用者連結，請聯絡管理員處理。",
+                        ], 409);
+                    }
+                    // [已存在且可用] 連結到用戶如果尚未連結
+                    if (! $staff->user_id) {
+                        $staff->user_id = $user->id;
+                        // 重新激活如果曾經離職再歸來
+                        $staff->is_active = true;
+                        $staff->save();
+                        Log::info("Binding User {$user->id} to existing Staff {$staff->id}");
+                    }
+                } else {
+                    // [Not Found] Create new Staff
+                    $roleEnum = match ($staffRole) {
+                        'teacher' => \App\Enums\StaffRole::Teacher,
+                        'admin' => \App\Enums\StaffRole::Admin,
+                        'worker' => \App\Enums\StaffRole::Worker,
+                        default => \App\Enums\StaffRole::Teacher,
+                    };
+
+                    $staff = \App\Models\Staff::create([
+                        'school_id' => $school->id,
+                        'user_id' => $user->id,
+                        'name' => $realName,
+                        'role' => $roleEnum,
+                        'dietary_type' => \App\Enums\DietaryType::Meat, // Default
+                        'is_meal_user' => true,
+                        'is_active' => true,
+                    ]);
+                    Log::info("Created new Staff {$staff->id} for User {$user->id}");
                 }
-            } else {
-                // [Not Found] Create new Staff
-                // Map string role to Enum
-                $roleEnum = match ($staffRole) {
-                    'teacher' => \App\Enums\StaffRole::Teacher,
-                    'admin' => \App\Enums\StaffRole::Admin,
-                    'worker' => \App\Enums\StaffRole::Worker,
-                    default => \App\Enums\StaffRole::Teacher,
-                };
 
-                $staff = \App\Models\Staff::create([
-                    'school_id' => $school->id,
-                    'user_id' => $user->id,
-                    'name' => $realName,
-                    // 'stage' => \App\Enums\SemesterStage::Elementary, // Removed: Staff usually don't have stage, or provide default
-                    'role' => $roleEnum,
-                    'dietary_type' => \App\Enums\DietaryType::Meat, // Default
-                    'is_meal_user' => true,
-                    'is_active' => true,
+                // Reload user to get fresh data
+                $user->load('school');
+
+                return response()->json([
+                    'message' => '綁定成功！',
+                    'user' => $user,
+                    'school_name' => $school->name,
+                    'staff_status' => $staff->wasRecentlyCreated ? 'created' : 'linked',
                 ]);
-                Log::info("Created new Staff {$staff->id} for User {$user->id}");
-            }
-
-            // Reload user to get fresh data
-            $user->load('school');
-
-            return response()->json([
-                'message' => '綁定成功！',
-                'user' => $user,
-                'school_name' => $school->name,
-                'staff_status' => $staff->wasRecentlyCreated ? 'created' : 'linked',
-            ]);
+            });
 
         } catch (\Exception $e) {
             Log::error('Binding Error', ['error' => $e->getMessage(), 'user_id' => $user->id, 'code' => $code]);
