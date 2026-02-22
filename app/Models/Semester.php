@@ -201,7 +201,9 @@ class Semester extends Model
         $date = Carbon::parse($date);
 
         // 1. 先查「學期例外表」(需 Eager Load: ->load('exceptions'))
-        $exception = $this->exceptions->firstWhere('date', $date->toDateString());
+        // [修正] SemesterException.date 被 cast 為 Carbon，必須用 toDateString() 做字串比對
+        $dateStr = $date->toDateString();
+        $exception = $this->exceptions->first(fn ($e) => $e->date->toDateString() === $dateStr);
 
         if ($exception) {
             // type 1 = 補課供餐，其他 (0放假/2活動/3天災) => DayOff

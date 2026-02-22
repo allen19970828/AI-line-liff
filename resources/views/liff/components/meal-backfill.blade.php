@@ -137,7 +137,7 @@
     <!-- Save Button -->
     <template x-if="backfill.changesCount > 0 && !backfill.isLocked">
         <button @click="submitBackfill()" :disabled="backfill.isSubmitting"
-            class="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg rounded-2xl shadow-lg shadow-indigo-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            class="w-full py-4 bg-linear-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg rounded-2xl shadow-lg shadow-indigo-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
             <template x-if="backfill.isSubmitting">
                 <div class="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
             </template>
