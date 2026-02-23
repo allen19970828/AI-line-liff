@@ -21,6 +21,12 @@ class Semester extends Model
     use HasFactory, LogsActivity, SoftDeletes; // 引入之前傳授的護法心經，確保不會撈到別校的學期
 
     /**
+     * @var array<string, \App\Models\SemesterException>|null
+     * 記憶體快取：以日期字串為 key 的例外字典，將 O(N) 搜尋提升為 O(1)
+     */
+    protected ?array $exceptionDictionary = null;
+
+    /**
      * [第二式：守門員]
      * 定義可被批量寫入的欄位
      */
@@ -145,7 +151,7 @@ class Semester extends Model
      */
     public function containsDate($date): bool
     {
-        if (! $date instanceof Carbon) {
+        if (!$date instanceof Carbon) {
             $date = Carbon::parse($date);
         }
 
@@ -158,7 +164,7 @@ class Semester extends Model
      */
     public function isFruitDay($date): bool
     {
-        if (! $date instanceof Carbon) {
+        if (!$date instanceof Carbon) {
             $date = Carbon::parse($date);
         }
 
@@ -193,30 +199,59 @@ class Semester extends Model
     }
 
     /**
+     * 從 O(1) 字典中取得特定日期的例外設定
+     */
+    public function getExceptionByDate(string $dateStr): ?\App\Models\SemesterException
+    {
+        if ($this->exceptionDictionary === null) {
+            if (!$this->relationLoaded('exceptions')) {
+                $this->load('exceptions');
+            }
+            $this->exceptionDictionary = [];
+            foreach ($this->exceptions as $ex) {
+                // Carbon cast，提取為 O(1) 索引
+                $this->exceptionDictionary[$ex->date->toDateString()] = $ex;
+            }
+        }
+
+        return $this->exceptionDictionary[$dateStr] ?? null;
+    }
+
+    /**
      * 判斷某一天是否「不供餐」 (結合了週末與例外表)
      * 這是生成菜單或訂單的核心邏輯
      *
      * @param  string|Carbon  $date
-     * @param  array|null  $holidayCache  可選的國定假日快取 (Hash Map)，格式為 ['Y-m-d' => true]
+     * @param  array|null  $holidayCache  可選的國定假日快取 (Hash Map)，格式為 ['Y-m-d' => ['type' => 'holiday', ...]]
+     * @param  string|null  $grade  特定年級，用於檢查例外是否適用
      */
-    public function isDayOff($date, ?array $holidayCache = null): bool
+    public function isDayOff($date, ?array $holidayCache = null, ?string $grade = null): bool
     {
-        $date = Carbon::parse($date);
-
-        // 1. 先查「學期例外表」(需 Eager Load: ->load('exceptions'))
-        // [修正] SemesterException.date 被 cast 為 Carbon，必須用 toDateString() 做字串比對
+        // [效能精煉] 避免重複 parsing
+        if (!$date instanceof Carbon) {
+            $date = Carbon::parse($date);
+        }
         $dateStr = $date->toDateString();
-        $exception = $this->exceptions->first(fn ($e) => $e->date->toDateString() === $dateStr);
+
+        // 1. 先查「學期例外表」(利用快取字典提升為 O(1))
+        $exception = $this->getExceptionByDate($dateStr);
 
         if ($exception) {
-            // type 1 = 補課供餐，其他 (0放假/2活動/3天災) => DayOff
-            return $exception->type !== 1;
+            // [BUG 修復] 必須檢查該例外是否適用於指定的年級 (如果未給定年級，或是全校通用，都會回傳 true)
+            if ($exception->appliesToGrade($grade)) {
+                // type 1 = 補課供餐，其他 (0放假/2活動/3天災) => DayOff
+                return $exception->type !== 1;
+            }
         }
 
         // 2. 查詢國定假日 (非補班日算 DayOff)
         // [效能優化] 如果有傳入 Hash Map 快取，則直接從記憶體查，O(1)
         if ($holidayCache !== null) {
-            $isNationalHoliday = isset($holidayCache[$dateStr]);
+            // BUG 修復：不僅要查 isset，還要確認它「不等於補班日」
+            $isNationalHoliday = false;
+            if (isset($holidayCache[$dateStr])) {
+                $isNationalHoliday = $holidayCache[$dateStr]['type'] !== \App\Models\NationalHoliday::TYPE_MAKEUP;
+            }
         } else {
             // [相容性] 保留原有的 DB Query 作為 Fallback
             $isNationalHoliday = NationalHoliday::where('date', $dateStr)
@@ -248,12 +283,12 @@ class Semester extends Model
         $current = $start->copy();
 
         // 預先載入 exceptions 避免 N+1 (如果尚未載入)
-        if (! $this->relationLoaded('exceptions')) {
+        if (!$this->relationLoaded('exceptions')) {
             $this->load('exceptions');
         }
 
         while ($current->lte($end)) {
-            if (! $this->isDayOff($current, $holidayCache)) {
+            if (!$this->isDayOff($current, $holidayCache)) {
                 $count++;
             }
             $current->addDay();
@@ -269,7 +304,7 @@ class Semester extends Model
     public function countServingDaysFromNow(Carbon $targetDate, ?array $holidayCache = null): int
     {
         // 預先載入 exceptions 避免 N+1
-        if (! $this->relationLoaded('exceptions')) {
+        if (!$this->relationLoaded('exceptions')) {
             $this->load('exceptions');
         }
 
@@ -278,7 +313,7 @@ class Semester extends Model
         $target = $targetDate->copy()->startOfDay();
 
         while ($current->lte($target)) {
-            if (! $this->isDayOff($current, $holidayCache)) {
+            if (!$this->isDayOff($current, $holidayCache)) {
                 $count++;
             }
             $current->addDay();

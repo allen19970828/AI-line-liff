@@ -50,7 +50,7 @@ class MealBillingService
         $count = 0;
 
         // 確保例外資料已讀取
-        if (! $semester->relationLoaded('exceptions')) {
+        if (!$semester->relationLoaded('exceptions')) {
             $semester->load('exceptions');
         }
 
@@ -72,7 +72,7 @@ class MealBillingService
             // 2. 檢查是否符合學生的用餐模式 (例如週三不用餐)
             if ($mealPattern !== null) {
                 // ISO day of week: 1 (Mon) to 7 (Sun)
-                if (! in_array($date->dayOfWeekIso, $mealPattern)) {
+                if (!in_array($date->dayOfWeekIso, $mealPattern)) {
                     continue;
                 }
             }
@@ -89,21 +89,8 @@ class MealBillingService
      */
     public function isDayOffForGrade(Semester $semester, Carbon $date, ?string $grade = null, ?array $holidayCache = null): bool
     {
-        $dateStr = $date->toDateString();
-
-        // A. 優先檢查學期例外表
-        $exception = $semester->exceptions->first(fn ($e) => $e->date->toDateString() === $dateStr);
-
-        if ($exception) {
-            // 如果此例外適用於該年級 (或是全校通用)
-            if ($exception->appliesToGrade($grade)) {
-                // type 1 是補課供餐(非 DayOff)，其他 type (0, 2, 3, 4) 皆視為 DayOff
-                return $exception->type !== 1;
-            }
-        }
-
-        // B. 呼叫學期模型內建的檢查 (包含週末與國定假日)
-        return $semester->isDayOff($date, $holidayCache);
+        // 呼叫經過 O(1) 快取優化且支援年級判斷的學期模型檢查
+        return $semester->isDayOff($date, $holidayCache, $grade);
     }
 
     /**
@@ -161,7 +148,7 @@ class MealBillingService
                 $week[] = [
                     'date' => $date->copy(),
                     'is_current_month' => $date->month === $month->month,
-                    'is_meal_day' => $date->between($semester->start_date, $semester->end_date) && ! $semester->isDayOff($date, $holidayCache),
+                    'is_meal_day' => $date->between($semester->start_date, $semester->end_date) && !$semester->isDayOff($date, $holidayCache),
                     'day' => $date->day,
                     'date_string' => $date->toDateString(),
                 ];
