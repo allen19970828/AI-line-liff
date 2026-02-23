@@ -195,8 +195,11 @@ class Semester extends Model
     /**
      * 判斷某一天是否「不供餐」 (結合了週末與例外表)
      * 這是生成菜單或訂單的核心邏輯
+     *
+     * @param  string|Carbon  $date
+     * @param  array|null  $holidayCache  可選的國定假日快取 (Hash Map)，格式為 ['Y-m-d' => true]
      */
-    public function isDayOff($date): bool
+    public function isDayOff($date, ?array $holidayCache = null): bool
     {
         $date = Carbon::parse($date);
 
@@ -211,9 +214,15 @@ class Semester extends Model
         }
 
         // 2. 查詢國定假日 (非補班日算 DayOff)
-        $isNationalHoliday = NationalHoliday::where('date', $date->toDateString())
-            ->where('type', '!=', NationalHoliday::TYPE_MAKEUP)
-            ->exists();
+        // [效能優化] 如果有傳入 Hash Map 快取，則直接從記憶體查，O(1)
+        if ($holidayCache !== null) {
+            $isNationalHoliday = isset($holidayCache[$dateStr]);
+        } else {
+            // [相容性] 保留原有的 DB Query 作為 Fallback
+            $isNationalHoliday = NationalHoliday::where('date', $dateStr)
+                ->where('type', '!=', NationalHoliday::TYPE_MAKEUP)
+                ->exists();
+        }
 
         if ($isNationalHoliday) {
             return true;
@@ -226,7 +235,7 @@ class Semester extends Model
     /**
      * 計算兩個日期之間的供餐日 (Workdays) 總數
      */
-    public function countWorkdays(string|Carbon $startDate, string|Carbon $endDate): int
+    public function countWorkdays(string|Carbon $startDate, string|Carbon $endDate, ?array $holidayCache = null): int
     {
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->startOfDay();
@@ -244,7 +253,7 @@ class Semester extends Model
         }
 
         while ($current->lte($end)) {
-            if (! $this->isDayOff($current)) {
+            if (! $this->isDayOff($current, $holidayCache)) {
                 $count++;
             }
             $current->addDay();
@@ -257,7 +266,7 @@ class Semester extends Model
      * 計算從「今天起」到目標日期之間有幾個供餐日 (不含今天，含目標日)
      * 用於驗證提前申請天數：提前天數 = 需「跳過」的供餐日數量
      */
-    public function countServingDaysFromNow(Carbon $targetDate): int
+    public function countServingDaysFromNow(Carbon $targetDate, ?array $holidayCache = null): int
     {
         // 預先載入 exceptions 避免 N+1
         if (! $this->relationLoaded('exceptions')) {
@@ -269,7 +278,7 @@ class Semester extends Model
         $target = $targetDate->copy()->startOfDay();
 
         while ($current->lte($target)) {
-            if (! $this->isDayOff($current)) {
+            if (! $this->isDayOff($current, $holidayCache)) {
                 $count++;
             }
             $current->addDay();

@@ -29,7 +29,7 @@ class PublicServer extends Server
      * @var array<int, class-string<\Laravel\Mcp\Server\Tool>>
      */
     protected array $tools = [
-        //
+        Tools\StudentLookupTool::class,
     ];
 
     /**
