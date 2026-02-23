@@ -24,7 +24,7 @@ Route::middleware(['auth'])->group(function () {
 
 // 專用列印路由：利用 Cache 與 UUID 進行無權限狀態下的安全傳遞
 Route::get('/print/lunch-fee-notification/{key}', function ($key) {
-    if (! $payload = \Illuminate\Support\Facades\Cache::get('print_job_'.$key)) {
+    if (!$payload = \Illuminate\Support\Facades\Cache::get('print_job_' . $key)) {
         return '<h1 style="text-align:center;font-family:sans-serif;margin-top:20%;">列印資料已過期，請關閉此視窗並重新點擊列印按鈕。</h1>';
     }
 
@@ -34,3 +34,9 @@ Route::get('/print/lunch-fee-notification/{key}', function ($key) {
 
     return view('print.lunch-fee-notification', compact('data', 'calendar', 'overview'));
 })->name('print.lunch-fee-notification');
+
+// [重構] 透過 Controller 穩定列印的核心路徑
+Route::post('/admin/print-lunch-fee-notification/render', \App\Http\Controllers\Admin\PrintLunchFeeController::class)
+    ->middleware(['auth'])
+    ->name('admin.print-lunch-fee-notification.render');
+

@@ -13,22 +13,17 @@
             </x-slot>
 
             <div class="mt-6 flex justify-end gap-3 w-full">
-                <x-filament::button type="button" icon="heroicon-o-printer" size="lg" x-on:click="
-                    let win = window.open('', '_blank');
-                    win.document.write(`<div style='text-align:center;font-family:sans-serif;margin-top:20vh;'><h2>列印資料準備中...請稍候</h2></div>`);
-                    $wire.preparePrint().then(url => {
-                        if(url) {
-                            win.location.href = url;
-                        } else {
-                            win.document.body.innerHTML = `<div style='color:red;text-align:center;font-family:sans-serif;margin-top:20vh;'><h2>缺少必要參數，請關閉此視窗並確認有選取學期與填寫資料</h2></div>`;
-                        }
-                    }).catch(err => {
-                        win.document.body.innerHTML = `<div style='color:red;text-align:center;font-family:sans-serif;margin-top:20vh;'><h2>連線或系統異常，請稍後再試</h2></div>`;
-                        console.error(err);
-                    });
-                ">
-                    立即列印 (A4)
-                </x-filament::button>
+                {{-- [重構] 不再使用 $wire 異步調用，改用標準 HTML Form POST 確保在高負載/複雜狀態下的穩定性 --}}
+                <form action="{{ route('admin.print.lunch-fee-notification.render') }}" method="POST" target="_blank"
+                    x-ref="printForm">
+                    @csrf
+                    <input type="hidden" name="data" :value="JSON.stringify($wire.data)">
+
+                    <x-filament::button type="submit" icon="heroicon-o-printer" size="lg"
+                        x-on:click="if(!$wire.data.semester_id) { $event.preventDefault(); new FilamentNotification().title('請先選擇學期').warning().send(); }">
+                        立即列印 (A4)
+                    </x-filament::button>
+                </form>
             </div>
         </x-filament::section>
 

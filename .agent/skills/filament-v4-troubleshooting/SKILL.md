@@ -60,9 +60,12 @@ protected static ?int $navigationSort = 1;
 > [!IMPORTANT]
 > 若沒有在檔案開頭 `use UnitEnum;`，則必須寫成 `string|\UnitEnum|null`，否則會報「類別找不到」或型別不匹配。
 
-## 3. 組件分家：Forms vs Schemas
+### 🚨 錯誤特徵
 
-v4 將「佈局元件」與「表單輸入元件」的命名空間拆開了。
+系統報錯：
+
+- `Class "Filament\Forms\Components\Section" not found`
+- `Class "Filament\Forms\Components\Group" not found`
 
 ### ✅ 修正方式
 

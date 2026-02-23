@@ -8,6 +8,16 @@
 - **批次動作**：支援「一鍵發送 LINE 通知」與「批次更新付款狀態」。
 - **自動化補償**：提供「手動觸發月結算」按鈕，呼叫 `LunchSettlementService`。
 
+### 1.2 SubsidyItemResource (補貼項目管理)
+
+- **核心功能**：設定各校專屬的補助項目（如原住民、低收入戶、身障補助）。
+- **匹配邏輯**：
+    - 支援按 `target_roles` (如 student, staff) 與 `identity_tags` (自定義標籤) 進行動態匹配。
+    - 提供 `is_full_coverage` (全額補助) 開關及 `amount_per_meal` (每餐定額) 設定。
+- **開發規範 (v4)**：
+    - **強型別組件**：表單結構必須建立在 `app/Filament/Resources/SubsidyItems/Schemas/` 下。
+    - **命名空間警示**：務必使用 `Filament\Schemas\Components\Section` 而非舊版 `Forms` 下的組件，以免造成 Class Not Found。
+
 ---
 
 ## 2. 統計與視覺化 (Analytics & Visualization)

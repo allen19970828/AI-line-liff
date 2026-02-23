@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\SubsidyItems\Schemas;
 
 use App\Enums\SubsidySource;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -79,7 +79,7 @@ class SubsidyItemForm
                             ->required()
                             ->numeric()
                             ->prefix('NT$')
-                            ->disabled(fn (\Filament\Forms\Get $get): bool => $get('is_full_coverage'))
+                            ->disabled(fn (\Filament\Schemas\Components\Utilities\Get $get): bool => $get('is_full_coverage'))
                             ->default(0),
                         TextInput::make('budget_limit')
                             ->label('總預算上限')
