@@ -77,6 +77,12 @@
                 margin: 0;
                 padding: 0;
                 box-shadow: none;
+                /* 強制限制在一頁內，超出部分縮小或截斷 (依賴瀏覽器 print to fit 設定) */
+                height: 100vh;
+                max-height: 297mm;
+                page-break-inside: avoid;
+                page-break-after: avoid;
+                page-break-before: avoid;
             }
         }
     </style>
