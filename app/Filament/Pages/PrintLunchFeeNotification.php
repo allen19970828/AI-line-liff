@@ -102,7 +102,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
                     ->columnSpanFull()
                     ->reorderable(true)
                     ->collapsible(true)
-                    ->itemLabel(fn (array $state): ?string => $state['custom_label'] ?? '未命名年段')
+                    ->itemLabel(fn(array $state): ?string => $state['custom_label'] ?? '未命名年段')
                     ->schema([
                         Select::make('grade_level')
                             ->label('請選擇計算使用的學制年級')
@@ -145,7 +145,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
             'overview' => $this->getBillingOverview(),
         ];
 
-        \Illuminate\Support\Facades\Cache::put('print_job_'.$key, $payload, now()->addMinutes(30));
+        \Illuminate\Support\Facades\Cache::put('print_job_' . $key, $payload, now()->addMinutes(30));
 
         // 回傳帶有 UUID 的專屬列印路由 (相對路徑避免 HTTPS 代理問題)
         return route('print.lunch-fee-notification', ['key' => $key], false);
@@ -161,7 +161,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
         }
 
         $semester = Semester::find($this->data['semester_id']);
-        if (! $semester) {
+        if (!$semester) {
             return [];
         }
 
@@ -178,7 +178,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
         }
 
         $semester = Semester::find($this->data['semester_id']);
-        if (! $semester) {
+        if (!$semester) {
             return ['rows' => []];
         }
 
@@ -206,10 +206,18 @@ class PrintLunchFeeNotification extends Page implements HasForms
         $customGrades = $this->data['custom_grades'] ?? [];
 
         foreach ($customGrades as $cg) {
-            $gradeValue = $cg['grade_level'] ?? '1';
-            $officialGrade = GradeLevel::tryFrom((int) $gradeValue);
+            $rawGradeValue = $cg['grade_level'] ?? 1;
+
+            if ($rawGradeValue instanceof GradeLevel) {
+                $officialGrade = $rawGradeValue;
+                $gradeValueStr = (string) $officialGrade->value;
+            } else {
+                $officialGrade = GradeLevel::tryFrom((int) $rawGradeValue);
+                $gradeValueStr = (string) $rawGradeValue;
+            }
+
             $fallbackLabel = $officialGrade ? $officialGrade->getLabel() : '未命名列';
-            $label = ! empty($cg['custom_label']) ? $cg['custom_label'] : $fallbackLabel;
+            $label = !empty($cg['custom_label']) ? $cg['custom_label'] : $fallbackLabel;
 
             $row = [
                 'label' => $label,
@@ -219,8 +227,8 @@ class PrintLunchFeeNotification extends Page implements HasForms
 
             foreach ($patterns as $key => $days) {
                 // 將計算年級的 string 型別餵入 service
-                $daysP1 = $service->calculateMealDays($semester, $start, $p1End, $days, $gradeValue);
-                $daysP2 = $service->calculateMealDays($semester, $p2Start, $end, $days, $gradeValue);
+                $daysP1 = $service->calculateMealDays($semester, $start, $p1End, $days, $gradeValueStr);
+                $daysP2 = $service->calculateMealDays($semester, $p2Start, $end, $days, $gradeValueStr);
 
                 $row['patterns'][$key] = [
                     'p1_days' => $daysP1,
