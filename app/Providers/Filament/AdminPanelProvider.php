@@ -34,6 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->brandName('AI午餐助手')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->passwordReset()

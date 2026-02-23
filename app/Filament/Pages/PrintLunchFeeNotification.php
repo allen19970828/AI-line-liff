@@ -102,12 +102,17 @@ class PrintLunchFeeNotification extends Page implements HasForms
             return null;
         }
 
-        session()->flash('print_data', $this->data);
-        session()->flash('print_calendar', $this->getCalendarData());
-        session()->flash('print_overview', $this->getBillingOverview());
+        $key = (string) \Illuminate\Support\Str::uuid();
+        $payload = [
+            'data' => $this->data,
+            'calendar' => $this->getCalendarData(),
+            'overview' => $this->getBillingOverview(),
+        ];
 
-        // 回傳相對路徑讓前端同步跳轉，避免 HTTP/HTTPS 反向代理問題
-        return route('print.lunch-fee-notification', [], false);
+        \Illuminate\Support\Facades\Cache::put('print_job_'.$key, $payload, now()->addMinutes(30));
+
+        // 回傳帶有 UUID 的專屬列印路由 (相對路徑避免 HTTPS 代理問題)
+        return route('print.lunch-fee-notification', ['key' => $key], false);
     }
 
     /**
