@@ -101,7 +101,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
                     ->columnSpanFull()
                     ->reorderable(true)
                     ->collapsible(true)
-                    ->itemLabel(fn(array $state): ?string => $state['custom_label'] ?? '未命名年段')
+                    ->itemLabel(fn (array $state): ?string => $state['custom_label'] ?? '未命名年段')
                     ->schema([
                         Select::make('grade_level')
                             ->label('請選擇計算使用的學制年級')
@@ -128,26 +128,41 @@ class PrintLunchFeeNotification extends Page implements HasForms
 
     public function preparePrint(): ?string
     {
-        // 確保抓取到表單最新的狀態
-        $this->data = $this->form->getState();
+        try {
+            // 確保抓取到表單最新的狀態
+            $this->data = $this->form->getState();
 
-        if (empty($this->data['semester_id'])) {
-            $this->dispatch('notify', message: '請先選擇學期');
+            if (empty($this->data['semester_id'])) {
+                // 使用最新的 Filament Notifications 寫法
+                \Filament\Notifications\Notification::make()
+                    ->title('請先選擇學期')
+                    ->warning()
+                    ->send();
+
+                return null;
+            }
+
+            $key = (string) \Illuminate\Support\Str::uuid();
+            $payload = [
+                'data' => $this->data,
+                'calendar' => $this->getCalendarData(),
+                'overview' => $this->getBillingOverview(),
+            ];
+
+            \Illuminate\Support\Facades\Cache::put('print_job_'.$key, $payload, now()->addMinutes(30));
+
+            // 回傳帶有 UUID 的專屬列印路由 (相對路徑避免 HTTPS 代理問題)
+            return route('print.lunch-fee-notification', ['key' => $key], false);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('PrintLunchFee Error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            \Filament\Notifications\Notification::make()
+                ->title('列印準備失敗')
+                ->body('錯誤原因: '.$e->getMessage().' (請聯絡管理員)')
+                ->danger()
+                ->send();
 
             return null;
         }
-
-        $key = (string) \Illuminate\Support\Str::uuid();
-        $payload = [
-            'data' => $this->data,
-            'calendar' => $this->getCalendarData(),
-            'overview' => $this->getBillingOverview(),
-        ];
-
-        \Illuminate\Support\Facades\Cache::put('print_job_' . $key, $payload, now()->addMinutes(30));
-
-        // 回傳帶有 UUID 的專屬列印路由 (相對路徑避免 HTTPS 代理問題)
-        return route('print.lunch-fee-notification', ['key' => $key], false);
     }
 
     /**
@@ -160,7 +175,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
         }
 
         $semester = Semester::find($this->data['semester_id']);
-        if (!$semester) {
+        if (! $semester) {
             return [];
         }
 
@@ -177,7 +192,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
         }
 
         $semester = Semester::find($this->data['semester_id']);
-        if (!$semester) {
+        if (! $semester) {
             return ['rows' => []];
         }
 
@@ -216,7 +231,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
             }
 
             $fallbackLabel = $officialGrade ? $officialGrade->getLabel() : '未命名列';
-            $label = !empty($cg['custom_label']) ? $cg['custom_label'] : $fallbackLabel;
+            $label = ! empty($cg['custom_label']) ? $cg['custom_label'] : $fallbackLabel;
 
             $row = [
                 'label' => $label,
