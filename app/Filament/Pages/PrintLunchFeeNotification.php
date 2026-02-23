@@ -101,23 +101,26 @@ class PrintLunchFeeNotification extends Page implements HasForms
                     ->columnSpanFull()
                     ->reorderable(true)
                     ->collapsible(true)
-                    ->itemLabel(fn (array $state): ?string => $state['custom_label'] ?? '未命名年段')
+                    ->itemLabel(fn(array $state): ?string => $state['custom_label'] ?? '未命名年段')
                     ->schema([
                         Select::make('grade_level')
                             ->label('請選擇計算使用的學制年級')
                             ->options(GradeLevel::class)
                             ->required()
                             ->live()
+                            ->default(1)
                             ->columnSpan(1),
                         TextInput::make('custom_label')
                             ->label('自訂顯示名稱 (可選)')
                             ->placeholder('例如: 幼兒園小班')
                             ->live()
+                            ->default('')
                             ->columnSpan(1),
                         TextInput::make('remark')
                             ->label('自訂專屬備註 (可選)')
                             ->placeholder('例如: 12/4 (四)')
                             ->live()
+                            ->default('')
                             ->columnSpan(1),
                     ])
                     ->live(),
@@ -149,15 +152,15 @@ class PrintLunchFeeNotification extends Page implements HasForms
                 'overview' => $this->getBillingOverview(),
             ];
 
-            \Illuminate\Support\Facades\Cache::put('print_job_'.$key, $payload, now()->addMinutes(30));
+            \Illuminate\Support\Facades\Cache::put('print_job_' . $key, $payload, now()->addMinutes(30));
 
             // 回傳帶有 UUID 的專屬列印路由 (相對路徑避免 HTTPS 代理問題)
             return route('print.lunch-fee-notification', ['key' => $key], false);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('PrintLunchFee Error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            \Illuminate\Support\Facades\Log::error('PrintLunchFee Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             \Filament\Notifications\Notification::make()
                 ->title('列印準備失敗')
-                ->body('錯誤原因: '.$e->getMessage().' (請聯絡管理員)')
+                ->body('錯誤原因: ' . $e->getMessage() . ' (請聯絡管理員)')
                 ->danger()
                 ->send();
 
@@ -175,7 +178,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
         }
 
         $semester = Semester::find($this->data['semester_id']);
-        if (! $semester) {
+        if (!$semester) {
             return [];
         }
 
@@ -192,7 +195,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
         }
 
         $semester = Semester::find($this->data['semester_id']);
-        if (! $semester) {
+        if (!$semester) {
             return ['rows' => []];
         }
 
@@ -231,7 +234,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
             }
 
             $fallbackLabel = $officialGrade ? $officialGrade->getLabel() : '未命名列';
-            $label = ! empty($cg['custom_label']) ? $cg['custom_label'] : $fallbackLabel;
+            $label = !empty($cg['custom_label']) ? $cg['custom_label'] : $fallbackLabel;
 
             $row = [
                 'label' => $label,
