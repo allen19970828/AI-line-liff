@@ -77,12 +77,7 @@
                 margin: 0;
                 padding: 0;
                 box-shadow: none;
-                /* 強制限制在一頁內，超出部分縮小或截斷 (依賴瀏覽器 print to fit 設定) */
-                height: 100vh;
-                max-height: 297mm;
-                page-break-inside: avoid;
-                page-break-after: avoid;
-                page-break-before: avoid;
+                height: auto;
             }
         }
     </style>
@@ -94,7 +89,7 @@
     </div>
 
     <!-- 列印預覽區 (模擬 A4 紙張) -->
-    <div class="print-container bg-white text-black mx-auto overflow-hidden">
+    <div class="print-container bg-white text-black mx-auto">
         <!-- 標題 -->
         <div class="text-center mb-8">
             <h1 class="text-3xl font-extrabold tracking-widest border-b-2 border-black inline-block pb-1 px-4">
@@ -149,12 +144,14 @@
                 <thead>
                     <tr class="bg-gray-50 font-bold">
                         <th class="border-2 border-black p-2 w-[14%]"></th>
-                        <th class="border-2 border-black p-2 text-red-600 w-[21%]">全部用餐<br>9-11月天數/費用<br>12-1月天數/費用</th>
-                        <th class="border-2 border-black p-2 text-red-600 w-[21%]">只吃週二<br>9-11月天數/費用<br>12-1月天數/費用</th>
-                        <th class="border-2 border-black p-2 text-red-600 w-[21%]">週三不用餐<br>9-11月天數/費用<br>12-1月天數/費用
-                        </th>
-                        <th class="border-2 border-black p-2 text-red-600 w-[21%]">三、五不用餐<br>9-11月天數/費用<br>12-1月天數/費用
-                        </th>
+                        @foreach(['全部用餐', '只吃週二', '週三不用餐', '三、五不用餐'] as $header)
+                            <th class="border-2 border-black p-2 text-red-600 w-[21%]">
+                                {{ $header }}<br>
+                                @foreach($overview['periods_header'] ?? [] as $pLabel)
+                                    <span class="text-xs font-normal text-gray-600">{{ $pLabel }}</span><br>
+                                @endforeach
+                            </th>
+                        @endforeach
                         <th class="border-2 border-black p-2 w-[10%]">備註</th>
                     </tr>
                 </thead>
@@ -164,8 +161,9 @@
                             <td class="border-2 border-black p-3 font-bold text-lg leading-tight">{{ $row['label'] }}</td>
                             @foreach(['all', 'tue_only', 'no_wed', 'no_wed_fri'] as $pKey)
                                 <td class="border-2 border-black p-3 whitespace-nowrap">
-                                    {{ $row['patterns'][$pKey]['p1_days'] }}天/{{ number_format($row['patterns'][$pKey]['p1_fee']) }}元<br>
-                                    {{ $row['patterns'][$pKey]['p2_days'] }}天/{{ number_format($row['patterns'][$pKey]['p2_fee']) }}元
+                                    @foreach($row['patterns'][$pKey] ?? [] as $periodData)
+                                        {{ $periodData['days'] }}天/{{ number_format($periodData['fee']) }}元<br>
+                                    @endforeach
                                 </td>
                             @endforeach
                             <td class="border-2 border-black p-3">

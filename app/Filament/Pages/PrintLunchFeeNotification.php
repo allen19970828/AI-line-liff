@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\GradeLevel;
 use App\Models\Semester;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -41,20 +42,55 @@ class PrintLunchFeeNotification extends Page implements HasForms
         $this->form->fill([
             'semester_id' => $activeSemester?->id,
             'school_name' => $school?->name ?? '○○國小',
-            'academic_year' => '114',
-            'term' => '一',
             'header' => '親愛的家長您好：',
-            'intro' => '自本學年度起午餐費改為 2 次收費，第一期為 9-11 月、第二期為 12-1 月，煩請家長留意，以下詳列出本學期用餐日期供參考，感謝家長們大力支持營養午餐業務，一起關心孩子吃的健康。',
+            'intro' => '自本學年度起午餐費改為「分期收費」，以下詳列出各期用餐日期與費用計算供參考，感謝家長們大力支持營養午餐業務，一起關心孩子吃的健康。',
             'footer' => "★每餐收費：學生自費 48 元（政府另外補助 5 元），共計 53 元\n★若有退餐費用，學期結束後有郵局帳戶學生會直接退至帳戶；無郵局帳戶學生會以現金退費",
+            'periods' => $this->getDefaultPeriods($activeSemester),
             'custom_grades' => [
                 ['grade_level' => '1', 'custom_label' => '一年級', 'remark' => ''],
                 ['grade_level' => '2', 'custom_label' => '二年級', 'remark' => ''],
                 ['grade_level' => '3', 'custom_label' => '三年級', 'remark' => ''],
-                ['grade_level' => '4', 'custom_label' => '四年級', 'remark' => '12/4 (四)'],
+                ['grade_level' => '4', 'custom_label' => '四年級', 'remark' => ''],
                 ['grade_level' => '5', 'custom_label' => '五年級', 'remark' => ''],
-                ['grade_level' => '6', 'custom_label' => '六年級', 'remark' => '12/4.5 (四五)'],
+                ['grade_level' => '6', 'custom_label' => '六年級', 'remark' => ''],
             ],
         ]);
+    }
+
+    protected function getDefaultPeriods(?Semester $semester): array
+    {
+        if (! $semester) {
+            return [];
+        }
+
+        /** @var \Carbon\Carbon $start */
+        $start = $semester->start_date;
+        /** @var \Carbon\Carbon $end */
+        $end = $semester->end_date;
+
+        if (! $start || ! $end) {
+            return [];
+        }
+
+        // 如果是第一學期 (約 9 月開始)
+        if ($start->month >= 8) {
+            $p1End = $start->copy()->month(11)->endOfMonth();
+            $p2Start = $start->copy()->month(12)->startOfMonth();
+
+            return [
+                ['label' => '第一階段 (9-11月)', 'start_date' => $start->toDateString(), 'end_date' => $p1End->toDateString()],
+                ['label' => '第二階段 (12-1月)', 'start_date' => $p2Start->toDateString(), 'end_date' => $end->toDateString()],
+            ];
+        }
+
+        // 如果是第二學期 (約 2 月開始)
+        $p1End = $start->copy()->month(4)->endOfMonth();
+        $p2Start = $start->copy()->month(5)->startOfMonth();
+
+        return [
+            ['label' => '第一階段 (2-4月)', 'start_date' => $start->toDateString(), 'end_date' => $p1End->toDateString()],
+            ['label' => '第二階段 (5-6月)', 'start_date' => $p2Start->toDateString(), 'end_date' => $end->toDateString()],
+        ];
     }
 
     public function form(Schema $schema): Schema
@@ -70,19 +106,29 @@ class PrintLunchFeeNotification extends Page implements HasForms
                     ->label('學校名稱')
                     ->required()
                     ->live(),
-                TextInput::make('academic_year')
-                    ->label('學年度')
-                    ->placeholder('例如: 114')
-                    ->required()
-                    ->live(),
-                Select::make('term')
-                    ->label('學期別')
-                    ->options([
-                        '一' => '第一學期',
-                        '二' => '第二學期',
+                Repeater::make('periods')
+                    ->label('收費分期設定')
+                    ->schema([
+                        TextInput::make('label')
+                            ->label('分期顯示名稱')
+                            ->placeholder('例如: 第一期 (9-11月)')
+                            ->required()
+                            ->columnSpan(2),
+                        DatePicker::make('start_date')
+                            ->label('開始日期')
+                            ->required()
+                            ->columnSpan(1),
+                        DatePicker::make('end_date')
+                            ->label('結束日期')
+                            ->required()
+                            ->columnSpan(1),
                     ])
-                    ->required()
-                    ->live(),
+                    ->columns(4)
+                    ->reorderable(true)
+                    ->cloneable(true)
+                    ->itemLabel(fn (array $state): ?string => $state['label'] ?? '未命名分期')
+                    ->live()
+                    ->columnSpanFull(),
                 TextInput::make('header')
                     ->label('抬頭稱呼')
                     ->live(),

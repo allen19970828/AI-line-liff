@@ -143,5 +143,70 @@ use Illuminate\Database\Eloquent\Builder;
 - **目錄複數**：`App\Filament\Resources\Students` (複數)。
 - **Namespace 校正**：確保目錄與 Namespace 完全對應，若有 `Student` (單數) 混用會導致 Autoload 失敗。
 
+## 8. 路由命名一致性 (Routing Consistency)
+
+在將 Filament 的功能（如列印、導出）從 Livewire 重構為獨立 Controller 以提升穩定性時，常會遇到路由名稱不匹配的問題。
+
+### 🚨 錯誤特徵
+
+`Symfony\Component\Routing\Exception\RouteNotFoundException: Route [admin.print.xxx] not defined.`
+
+### ✅ 修正方式
+
+- **檢查標點符號**：仔細檢查 `routes/web.php` 中定義的 `->name()` 是否與 Blade 視圖或 Controller 中 `route()` 函式呼叫的字串完全一致。常見錯誤是點號 (`.`) 與連字號 (`-`) 混用。
+- **命名規範建議**：在 Filament 專案中，建議遵循「點號層級命名」（Dot notation），例如使用 `admin.print.lunch-fee-notification.render`。這與 Filament 內部的命名習慣較為接近，且具備更好的語意層級。
+
+```php
+// ✅ 推薦方法：routes/web.php
+Route::post('/admin/print/render', PrintController::class)
+    ->middleware(['auth'])
+    ->name('admin.print.lunch-fee-notification.render');
+
+// ✅ Blade 視圖連結
+<form action="{{ route('admin.print.lunch-fee-notification.render') }}" method="POST">
+```
+
+## 9. 穩定性重構：從 Livewire 轉向 Controller (Stable Operations)
+
+當 Filament 頁面中的某些操作（如生成大型 PDF、複雜報表、批量列印）在 Livewire 中頻繁報 500 錯誤或狀態迷失時，應考慮「弱化 Livewire」的重構策略。
+
+### 🚨 錯誤特徵
+
+- `Livewire\Exceptions\ComponentNotFoundException`
+- 頁面重新載入後 `$wire` 資料丟失。
+- 異步請求逾時或高負載下的不可靠行為。
+
+### ✅ 修正方式
+
+使用 **Filament Page (輸入介面) + Backend Controller (執行介面)** 的架構：
+
+1. **視圖層**：使用標準 HTML `<form>` 並將 `target="_blank"` 設為新視窗。
+2. **資料傳遞**：將 Livewire 的資料 JSON 化後透過 `hidden input` 傳遞。
+3. **後端處理**：建立專用的 `__invoke` Controller 接收 POST 請求並執行邏輯。
+
+```blade
+<!-- ✅ 穩定模式：resources/views/filament/pages/xxx.blade.php -->
+<form action="{{ route('admin.print.render') }}" method="POST" target="_blank">
+    @csrf
+    <input type="hidden" name="data" :value="JSON.stringify($wire.data)">
+
+    <x-filament::button type="submit">
+        立即執行 (穩定模式)
+    </x-filament::button>
+</form>
+```
+
+```php
+// ✅ 後端：app/Http/Controllers/Admin/PrintController.php
+public function __invoke(Request $request)
+{
+    $data = json_decode($request->input('data'), true);
+    // 執行複雜邏輯並回傳 View 或 FileStream
+}
+```
+
+> [!TIP]
+> 這種方式能徹底規避 Livewire 的 Lifecycle 複雜性，特別適合「一次性、高耗時、需要開啟新視窗」的操作。
+
 > [!TIP]
 > 遇到不確定的方法簽章，直接到 `/vendor/filament/` 下 `grep` 該父類別的定義是最快的途徑。

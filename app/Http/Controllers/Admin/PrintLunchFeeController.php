@@ -50,13 +50,8 @@ class PrintLunchFeeController extends Controller
             'no_wed_fri' => [1, 2, 4],
         ];
 
-        $start = $semester->start_date;
-        $end = $semester->end_date;
-
-        // 計算分期
-        $p1End = $start->copy()->month(11)->endOfMonth();
-        $p2Start = $start->copy()->month(12)->startOfMonth();
-
+        // 取得動態分期設定
+        $periods = $data['periods'] ?? [];
         $rows = [];
         $customGrades = $data['custom_grades'] ?? [];
 
@@ -75,22 +70,28 @@ class PrintLunchFeeController extends Controller
             ];
 
             foreach ($patterns as $key => $days) {
-                $daysP1 = $service->calculateMealDays($semester, $start, $p1End, $days, $gradeValueStr);
-                $daysP2 = $service->calculateMealDays($semester, $p2Start, $end, $days, $gradeValueStr);
+                // 計算每一期的天數與費用
+                $periodResults = [];
+                foreach ($periods as $p) {
+                    $pStart = \Illuminate\Support\Carbon::parse($p['start_date']);
+                    $pEnd = \Illuminate\Support\Carbon::parse($p['end_date']);
 
-                $row['patterns'][$key] = [
-                    'p1_days' => $daysP1,
-                    'p1_fee' => $daysP1 * $studentPay,
-                    'p2_days' => $daysP2,
-                    'p2_fee' => $daysP2 * $studentPay,
-                ];
+                    $mealDays = $service->calculateMealDays($semester, $pStart, $pEnd, $days, $gradeValueStr);
+
+                    $periodResults[] = [
+                        'label' => $p['label'] ?? '',
+                        'days' => $mealDays,
+                        'fee' => $mealDays * $studentPay,
+                    ];
+                }
+
+                $row['patterns'][$key] = $periodResults;
             }
             $rows[] = $row;
         }
 
         return [
-            'p1_label' => '9-11月',
-            'p2_label' => '12-1月',
+            'periods_header' => collect($periods)->pluck('label')->toArray(),
             'rows' => $rows,
         ];
     }
