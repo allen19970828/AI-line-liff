@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SubsidyItems\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
@@ -78,7 +79,7 @@ class SubsidyItemsTable
             ])
             ->actions([
                 EditAction::make(),
-                \Filament\Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
