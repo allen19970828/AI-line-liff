@@ -76,7 +76,10 @@ v4 將過去分散各處的 Action 命名空間統一。即使是在 Table 內�
 
 ### 🚨 錯誤特徵
 
-`Class "Filament\Tables\Actions\EditAction" not found`
+最常發生在複製舊版程式碼時，系統會報錯：
+
+- `Class "Filament\Tables\Actions\EditAction" not found`
+- `Class "Filament\Tables\Actions\DeleteAction" not found`
 
 ### ✅ 修正方式
 
