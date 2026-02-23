@@ -93,7 +93,7 @@
         <!-- 標題 -->
         <div class="text-center mb-8">
             <h1 class="text-3xl font-extrabold tracking-widest border-b-2 border-black inline-block pb-1 px-4">
-                {{ $data['school_name'] }}{{ $data['academic_year'] }}學年度第{{ $data['term'] }}學期午餐費通知單
+                {{ $data['title'] ?? '午餐費通知單' }}
             </h1>
         </div>
 

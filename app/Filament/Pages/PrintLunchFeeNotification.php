@@ -42,6 +42,7 @@ class PrintLunchFeeNotification extends Page implements HasForms
         $this->form->fill([
             'semester_id' => $activeSemester?->id,
             'school_name' => $school?->name ?? '○○國小',
+            'title' => ($school?->name ?? '○○國小').'午餐費通知單',
             'header' => '親愛的家長您好：',
             'intro' => '自本學年度起午餐費改為「分期收費」，以下詳列出各期用餐日期與費用計算供參考，感謝家長們大力支持營養午餐業務，一起關心孩子吃的健康。',
             'footer' => "★每餐收費：學生自費 48 元（政府另外補助 5 元），共計 53 元\n★若有退餐費用，學期結束後有郵局帳戶學生會直接退至帳戶；無郵局帳戶學生會以現金退費",
@@ -105,6 +106,12 @@ class PrintLunchFeeNotification extends Page implements HasForms
                 TextInput::make('school_name')
                     ->label('學校名稱')
                     ->required()
+                    ->live(),
+                TextInput::make('title')
+                    ->label('通知單大標題')
+                    ->placeholder('例如: ○○國小114學年度第1學期午餐費通知單')
+                    ->required()
+                    ->columnSpanFull()
                     ->live(),
                 Repeater::make('periods')
                     ->label('收費分期設定')

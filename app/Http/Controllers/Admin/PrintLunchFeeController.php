@@ -18,6 +18,12 @@ class PrintLunchFeeController extends Controller
             $data = json_decode($data, true);
         }
 
+        // 確保關鍵欄位存在，避免視圖報錯
+        $data['title'] = $data['title'] ?? (($data['school_name'] ?? '○○國小').'午餐費通知單');
+        $data['header'] = $data['header'] ?? '親愛的家長您好：';
+        $data['intro'] = $data['intro'] ?? '';
+        $data['footer'] = $data['footer'] ?? '';
+
         if (empty($data['semester_id'])) {
             return back()->with('error', '請先選擇學期');
         }
