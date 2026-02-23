@@ -163,8 +163,7 @@
                                 </td>
                             @endforeach
                             <td class="border-2 border-black p-3">
-                                @if($idx == 3) <span class="text-sm">12/4<br>(四)</span> @elseif($idx == 5) <span
-                                class="text-sm">12/4.5<br>(四五)</span> @endif
+                                <span class="text-sm whitespace-pre-wrap">{{ $row['remark'] ?? '' }}</span>
                             </td>
                         </tr>
                     @endforeach

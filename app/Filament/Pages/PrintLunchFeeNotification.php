@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Enums\GradeLevel;
 use App\Models\Semester;
 use App\Services\MealBillingService;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -45,7 +46,16 @@ class PrintLunchFeeNotification extends Page implements HasForms
             'term' => '一',
             'header' => '親愛的家長您好：',
             'intro' => '自本學年度起午餐費改為 2 次收費，第一期為 9-11 月、第二期為 12-1 月，煩請家長留意，以下詳列出本學期用餐日期供參考，感謝家長們大力支持營養午餐業務，一起關心孩子吃的健康。',
+            'intro' => '自本學年度起午餐費改為 2 次收費，第一期為 9-11 月、第二期為 12-1 月，煩請家長留意，以下詳列出本學期用餐日期供參考，感謝家長們大力支持營養午餐業務，一起關心孩子吃的健康。',
             'footer' => "★每餐收費：學生自費 48 元（政府另外補助 5 元），共計 53 元\n★若有退餐費用，學期結束後有郵局帳戶學生會直接退至帳戶；無郵局帳戶學生會以現金退費",
+            'custom_grades' => [
+                ['grade_level' => '1', 'custom_label' => '一年級', 'remark' => ''],
+                ['grade_level' => '2', 'custom_label' => '二年級', 'remark' => ''],
+                ['grade_level' => '3', 'custom_label' => '三年級', 'remark' => ''],
+                ['grade_level' => '4', 'custom_label' => '四年級', 'remark' => '12/4 (四)'],
+                ['grade_level' => '5', 'custom_label' => '五年級', 'remark' => ''],
+                ['grade_level' => '6', 'custom_label' => '六年級', 'remark' => '12/4.5 (四五)'],
+            ],
         ]);
     }
 
@@ -85,6 +95,32 @@ class PrintLunchFeeNotification extends Page implements HasForms
                 Textarea::make('footer')
                     ->label('頁尾備註')
                     ->rows(3)
+                    ->live(),
+                Repeater::make('custom_grades')
+                    ->label('年段與計算列設定')
+                    ->columns(3)
+                    ->columnSpanFull()
+                    ->reorderable(true)
+                    ->collapsible(true)
+                    ->itemLabel(fn (array $state): ?string => $state['custom_label'] ?? '未命名年段')
+                    ->schema([
+                        Select::make('grade_level')
+                            ->label('請選擇計算使用的學制年級')
+                            ->options(GradeLevel::class)
+                            ->required()
+                            ->live()
+                            ->columnSpan(1),
+                        TextInput::make('custom_label')
+                            ->label('自訂顯示名稱 (可選)')
+                            ->placeholder('例如: 幼兒園小班')
+                            ->live()
+                            ->columnSpan(1),
+                        TextInput::make('remark')
+                            ->label('自訂專屬備註 (可選)')
+                            ->placeholder('例如: 12/4 (四)')
+                            ->live()
+                            ->columnSpan(1),
+                    ])
                     ->live(),
             ])
             ->statePath('data')
@@ -150,15 +186,6 @@ class PrintLunchFeeNotification extends Page implements HasForms
         $breakdown = $semester->cost_breakdown ?? [];
         $studentPay = $breakdown['student_pay'] ?? 48; // 預設 48 元
 
-        $grades = [
-            GradeLevel::GRADE_1,
-            GradeLevel::GRADE_2,
-            GradeLevel::GRADE_3,
-            GradeLevel::GRADE_4,
-            GradeLevel::GRADE_5,
-            GradeLevel::GRADE_6,
-        ];
-
         $patterns = [
             'all' => [1, 2, 3, 4, 5],
             'tue_only' => [2],
@@ -176,15 +203,24 @@ class PrintLunchFeeNotification extends Page implements HasForms
         $p2Start = $start->copy()->month(12)->startOfMonth();
 
         $rows = [];
-        foreach ($grades as $grade) {
+        $customGrades = $this->data['custom_grades'] ?? [];
+
+        foreach ($customGrades as $cg) {
+            $gradeValue = $cg['grade_level'] ?? '1';
+            $officialGrade = GradeLevel::tryFrom((int) $gradeValue);
+            $fallbackLabel = $officialGrade ? $officialGrade->getLabel() : '未命名列';
+            $label = ! empty($cg['custom_label']) ? $cg['custom_label'] : $fallbackLabel;
+
             $row = [
-                'label' => $grade->getLabel(),
+                'label' => $label,
+                'remark' => $cg['remark'] ?? '',
                 'patterns' => [],
             ];
 
             foreach ($patterns as $key => $days) {
-                $daysP1 = $service->calculateMealDays($semester, $start, $p1End, $days, (string) $grade->value);
-                $daysP2 = $service->calculateMealDays($semester, $p2Start, $end, $days, (string) $grade->value);
+                // 將計算年級的 string 型別餵入 service
+                $daysP1 = $service->calculateMealDays($semester, $start, $p1End, $days, $gradeValue);
+                $daysP2 = $service->calculateMealDays($semester, $p2Start, $end, $days, $gradeValue);
 
                 $row['patterns'][$key] = [
                     'p1_days' => $daysP1,
